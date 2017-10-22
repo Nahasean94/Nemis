@@ -1,0 +1,19 @@
+doctype html
+html
+    head
+        title Nemis Imeweza
+    body
+        form(action="/register_student" method="post")
+            label(for="surname") Surname
+            input(type="text" name="surname" id="surname" required="true")
+            label(for="first_name") First name
+            input(type="text" name="first_name" id="first_name" required="true")
+            label(for="second_name") Second name
+            input(type="text" name="second_name" id="second_name")
+            label(for="dob") Date of birth
+            input(type="date" name="dob" id="dob" required="true")
+            label(for="male") Male
+            input(type="radio" name="gender" id="male" value="male")
+            label(for="female") Female
+            input(type="radio" name="gender"  id="female" value="female")
+            input(type="submit" name="submit" value="Submit")

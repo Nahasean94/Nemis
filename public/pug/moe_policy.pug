@@ -1,0 +1,14 @@
+doctype html
+html
+    head
+        title Nemis Imeweza
+    body
+        form(action="/moe_policy" method="post")
+            label(for="title") Title
+            input(type="text" name="title" id="title")
+            br
+            label(for="policy") Policies
+            br
+            textarea(rows="10" cols="50" name="description" id="policy")
+            br
+            input(type="submit" name="submit" value="Submit")

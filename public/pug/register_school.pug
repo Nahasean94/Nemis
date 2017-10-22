@@ -1,0 +1,15 @@
+doctype html
+html
+    head
+        title Update School Information
+    body
+        form(action="/register_school" method="post")
+            label(for="name") School Name
+            input(type="text" id="name" required="true" name="name" autofocus="true")
+            label(for="category") Category
+            select(name="category" id="category" required="true")
+                option(value="ecde") ECDE
+                option(value="primary") Primary
+                option(value="secondary") Secondary
+                option(value="tertiary") Tertiary
+            input(type="submit" name="submit" value="Submit")

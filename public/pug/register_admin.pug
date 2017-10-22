@@ -1,0 +1,15 @@
+doctype html
+html
+    head
+        title Nemis Imeweza
+    body
+        form(action="/register_admin" method="post")
+            label(for="email") Email
+            input(type="email" name="email" id="email" required="true")
+            label(for="username") Username
+            input(type="text" name="username" id="username" required="true")
+            label(for="password") Password
+            input(type="password" name="password" id="password" required="true")
+            label(for="cpass") Confirm Password
+            input(type="password" name="cpass" id="cpass" required="true")
+            input(type="submit" name="submit" value="Submit")

@@ -1,0 +1,26 @@
+doctype html
+html
+    head
+        title Nemis Imeweza
+    body
+        //TODO add dropdown of schools and school types
+        form(action="/update_school_info" method="post")
+            label(for="upi") Upi
+            input(type="text" name="upi" id="upi" required="true")
+            label(for="name") Name
+            select(name="name" id="name")
+                option(value="Mutarakwa Primay School") Mutarakwa Primay School
+                option(value="Michinda Boys") Michinda Boys
+                option(value="Alliance") Alliance
+                option(value="Tenweek") Tenweek
+                option(value="Moi University Primary") Moi University Primary
+                option(value="Kapsabet") Kapsabet
+                option(value="Alliance Girls") Alliance Girls
+            label(for="location") Location
+            input(type="text" name="location" id="location" required="true")
+            label(for="category") Type of School
+            select(name="name" id="category")
+                option(value="Nursery") Nursery
+                option(value="Primary") Primary
+                option(value="Secondary") Secondary
+            input(type="submit" name="submit" value="Submit")
