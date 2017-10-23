@@ -1,0 +1,11 @@
+doctype
+html
+    head
+        title Schools
+    body
+        p we have #{schools.length} schools
+        ul
+            -for(let i=0;i<schools.length;i++){
+                li
+                    a(href='/admin/schools/'+schools[i]._id) #{schools[i].name}, #{schools[i]._id}, #{schools[i].category}
+            -}

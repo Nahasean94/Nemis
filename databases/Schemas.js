@@ -145,10 +145,11 @@ const SchoolSchema = new Schema({
         }
     },
     assets: {
-        busses: {
+        buses: {
             type: Number,
             default: 0
         },
+        //
         livestock: [{
             type: String,
             quantity: Number
@@ -165,13 +166,13 @@ const SchoolSchema = new Schema({
         }
     },
     learning_materials: {
+        //TODO merge equipment with learning materials and make labs learning materials
         science_labs: {
             type: Number,
             default: 0
         },
         book_ratio: {
-            type: Number,
-            default: 0
+            type: String,
         }
     },
     contact: {

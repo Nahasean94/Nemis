@@ -7,5 +7,27 @@ html
         br
         a(href="/register_teacher") Register Teacher
         br
-        a(href="/update_school") Add school details
-
+        a(href="/update_school_info/"+school._id) Edit school details
+        br
+        ul
+            li #{school._id}
+            li #{school.name}
+            li #{school.category}
+            li Learning Materials
+                ul
+                    li Book ratio: #{school.learning_materials.book_ratio}
+                    li Science labs: #{school.learning_materials.science_labs}
+            li Equipment
+                ul
+                    li Labs: #{school.equipment.labs}
+            li Assets
+                ul
+                    li Farming Land: #{school.assets.farming_land}
+                    li Livestock: #{school.assets.livestock}
+                    li Busses: #{school.assets.busses}
+            li Infrastructure
+                ul
+                    li Dormitories: #{school.infrastructure.dormitories}
+                    li Halls: #{school.infrastructure.halls}
+                    li Playing fields: #{school.infrastructure.playing_fields}
+                    li Class rooms: #{school.infrastructure.classes}

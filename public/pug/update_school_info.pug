@@ -3,24 +3,60 @@ html
     head
         title Nemis Imeweza
     body
-        //TODO add dropdown of schools and school types
-        form(action="/update_school_info" method="post")
-            label(for="upi") Upi
-            input(type="text" name="upi" id="upi" required="true")
+        form(method="post" action="/update_school_info")
+            input(type="hidden" value=school._id name="upi")
             label(for="name") Name
-            select(name="name" id="name")
-                option(value="Mutarakwa Primay School") Mutarakwa Primay School
-                option(value="Michinda Boys") Michinda Boys
-                option(value="Alliance") Alliance
-                option(value="Tenweek") Tenweek
-                option(value="Moi University Primary") Moi University Primary
-                option(value="Kapsabet") Kapsabet
-                option(value="Alliance Girls") Alliance Girls
+            input(type="text" name="name" value=school.name id="name" required="true")
+            br
+            label(for="category") Category
+            select(name="category" id="category" required="true")
+                option(value="ecde") ECDE
+                option(value="primary") Primary
+                option(value="secondary") Secondary
+                option(value="tertiary") Tertiary
+            br
+            label(for="ratio") Book ratio, book:students
+            input(type="text" name="ratio" id="ratio" placeholder="e.g 1:2")
+            br
+            label(for="science_labs") Science labs
+            input(type="number" name="science_labs" value=school.learning_materials.science_labs id="science_labs")
+            br
+            label(for="labs") Labs
+            input(type="number" name="labs" value=school.learning_materials.science_labs id="labs")
+            br
+            label(for="farming_land") Farming Land in acres
+            input(type="number" name="farming_land" value=school.assets.farming_land id="farming_land")
+            br
+            label(for="livestock") Livestock
+            input(type="number" name="livestock" value=school.assets.livestock id="livestock")
+            br
+            label(for="buses") Buses
+            input(type="number" name="buses" value=school.assets.buses id="buses")
+            br
+            label(for="dormitories") Dormitories
+            input(type="number" name="dormitories" value=school.infrastructure.dormitories id="dormitories" )
+            br
+            label(for="halls") Halls
+            input(type="number" name="halls" value=school.infrastructure.halls id="halls" )
+            br
+            label(for="playing_fields") Playing Fields
+            input(type="number" name="playing_fields" value=school.infrastructure.playing_fields id="playing_fields" )
+            br
+            label(for="classes") Class rooms
+            input(type="number" name="classes" value=school.infrastructure.classes id="classes" )
+            br
+            label(for="email") Email
+            input(type="email" name="email" id="email" )
+            br
+            label(for="phone1") Phone number 1
+            input(type="number" name="phone1" id="phone1" )
+            br
+            label(for="phone2") Phone number 2
+            input(type="number" name="phone2" id="phone2" )
+            br
+            label(for="address") Postal address
+            input(type="text" name="address" id="address" placeholder="e.g P.O Box 569 Nairobi" )
+            br
             label(for="location") Location
-            input(type="text" name="location" id="location" required="true")
-            label(for="category") Type of School
-            select(name="name" id="category")
-                option(value="Nursery") Nursery
-                option(value="Primary") Primary
-                option(value="Secondary") Secondary
-            input(type="submit" name="submit" value="Submit")
+            input(type="text" name="location" id="location" )
+            input(type="submit" name="submit" value="Update" id="submit")
