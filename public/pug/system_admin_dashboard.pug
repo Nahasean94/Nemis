@@ -1,0 +1,15 @@
+doctype
+html
+    head
+        title Dashboard
+    body
+        p You are logged in as #{ctx.session.username}
+        a(href="/logout") Logout
+        br
+        a(href="/students") Students
+        br
+        a(href="/teachers") Teachers
+        br
+        a(href="/schools") Schools
+        br
+        a(href="/school_admins") School Administrators

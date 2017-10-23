@@ -101,29 +101,56 @@ router.post('/register_student', koaBody, async ctx => {
         ctx.body = saved
     }
 })
-// const stude = {
-//     surname: 'dsfdsf',
-//     first_name: 'dsfdsf',
-//     second_name: 'dsfdsf',
-//     dob: new Date(),
-//     gender: 'male'
-// }
-// const stude2 = {
-//     surname: 'dsfdsf',
-//     first_name: 'dsfdsf',
-//     second_name: 'dsfdsf',
-//     dob: new Date(),
-//     gender: 'male'
-// }
-// const stude3 = {
-//     surname: 'dsfdsf',
-//     first_name: 'dsfdsf',
-//     second_name: 'dsfdsf',
-//     dob: new Date(),
-//     gender: 'male'
-// }
-// storeStudentDetails(stude)
-// storeStudentDetails(stude2)
+//display the admin page
+router.get('/admin', async ctx => {
+    if (ctx.path === '/favicon.ico') return
+    if (ctx.session.isNew) {
+        ctx.render('admin_signup')
+    } else {
+        if (ctx.session.role === 'system') {
+            loadSystemAdminDashboard(ctx)
+        }
+        if (ctx.session.role === 'nemis') {
+            loadNemisAdminDashboard(ctx)
+        }
+    }
+})
+//admin login
+router.post('/admin_login',koaBody,async ctx=>{
+    const details = ctx.request.body
+    if (details.login_email.length < 1 || details.login_password.length < 1) {
+        ctx.body = 'fill_all'
+    }
+    else {
+        const query = Administrator.findOne({
+            'email': details.login_email,
+            'password': details.login_password
+        })
+        query.select('email username password role')
+        await query.exec().then(async function (person) {
+            //analyse the results from the database to know if the user is signed in.
+            if (person !== null) {
+                ctx.session.username = person.username
+                ctx.session.email=person.email
+                ctx.session.role=person.role
+                ctx.session.isNew = false
+                console.log(person)
+                ctx.redirect('/admin')
+            }
+            else {
+                ctx.body = "You are not registered"
+            }
+        }).catch(function (err) {
+            ctx.body = err
+        })
+    }
+})
+//logout
+router.get('/logout', async ctx => {
+    //Clear the session
+    ctx.session = null
+    ctx.redirect('/')
+})
 
 //store student details
 async function storeStudentDetails(student) {
@@ -150,7 +177,7 @@ async function storeStudentDetails(student) {
         return "saved"
     } catch (err) {
         console.log(err.message)
-        if ((err.message).split(' ')[0]==='E11000') {
+        if ((err.message).split(' ')[0] === 'E11000') {
             // storeStudentDetails(student)
         }
         return err
@@ -257,7 +284,7 @@ router.get('/register_admin', async ctx => {
 router.post('/register_admin', koaBody, async ctx => {
     const details = ctx.request.body
     if (details !== undefined) {
-        const register_status = await registerAdmin(details)
+        const register_status = await registerAdmin(ctx, details)
         // Redirect the user in accordance to the error they made during registration
         switch (register_status) {
             case 'fill_all':
@@ -267,7 +294,7 @@ router.post('/register_admin', koaBody, async ctx => {
                 ctx.body = 'Your passwords do not match! Please try again'
                 break
             case 'saved':
-                ctx.body = 'Admin details saved'
+                ctx.redirect('/admin')
                 break
             default:
                 ctx.body = 'Saving your details was unsuccessful and the error is ' + register_status
@@ -276,7 +303,13 @@ router.post('/register_admin', koaBody, async ctx => {
     }
 })
 
-async function registerAdmin(admin) {
+
+function loadSystemAdminDashboard(ctx) {
+    console.log("sdfjks")
+    ctx.render('system_admin_dashboard', {ctx: ctx})
+}
+
+async function registerAdmin(ctx, admin) {
     if (admin.password.length < 1 || admin.cpass.length < 1 || admin.email.length < 1 || admin.username.length < 1) {
         return "fill_all"
     }
@@ -291,7 +324,11 @@ async function registerAdmin(admin) {
         role: 'system'
     })
     try {
-        await newPerson.save()
+        const saved = await newPerson.save()
+        ctx.session.id = saved.id
+        ctx.session.username = saved.username
+        ctx.session.email = saved.email
+        ctx.session.role = saved.role
         return 'saved'
     }
     catch (err) {
