@@ -221,231 +221,230 @@ async function storeTeacherDetails(teacher_info) {
     }
 }
 
-//display school registration form
+//display school update_info form
 router.get('/update_school_info/:id', async ctx => {
     await School.findOne({_id: ctx.params.id}).exec().then(function (school) {
         ctx.render('update_school_info', {school: school})
     })
 })
 
-//register new student details in the database
+//update school_info details in the database
 router.post('/update_school_info', koaBody, async ctx => {
     const school_info = ctx.request.body
 
     await updateSchoolDetails(school_info).then(async function (school) {
-console.log(school)
+        console.log(school)
         ctx.redirect(`/admin/schools/${await school._id}`)
     })
 })
+
 //update school details
-    async function updateSchoolDetails(school) {
-        return await School.findOneAndUpdate({
-                _id: school.upi
-            }, {
-                name: school.name,
-                location: school.location,
-                category: school.category,
-                infrastructure: {
-                    classes: school.classes,
-                    playing_fields: school.playing_fields,
-                    halls: school.halls,
-                    dormitories: school.dormitories
-                }
-                ,
-                assets: {
-                    buses: school.buses,
-                    // livestock: school.livestock,
-                    farming_land: school.farming_land
-                }
-                ,
-                equipment: {
-                    labs: school.labs
-                }
-                ,
-                learning_materials: {
-                    science_labs: school.science_labs,
-                    book_ratio: school.ratio
-                }
-                ,
-                contact: {
-                    email: school.email,
-                    phone1: school.phone1,
-                    phone2: school.phone2,
-                    address: school.address
-
-                }
+async function updateSchoolDetails(school) {
+    return await School.findOneAndUpdate({
+            _id: school.upi
+        }, {
+            name: school.name,
+            location: school.location,
+            category: school.category,
+            infrastructure: {
+                classes: school.classes,
+                playing_fields: school.playing_fields,
+                halls: school.halls,
+                dormitories: school.dormitories
             }
-        ).exec()
-    }
+            ,
+            assets: {
+                buses: school.buses,
+                // livestock: school.livestock,
+                farming_land: school.farming_land
+            }
+            ,
+            equipment: {
+                labs: school.labs
+            }
+            ,
+            learning_materials: {
+                science_labs: school.science_labs,
+                book_ratio: school.ratio
+            }
+            ,
+            contact: {
+                email: school.email,
+                phone1: school.phone1,
+                phone2: school.phone2,
+                address: school.address
 
-//store teacher details
+            }
+        }
+    ).exec()
+}
 
 //display ministry of education policy form
-    router.get('/moe_policy', async ctx => {
-        ctx.render('moe_policy')
-    })
+router.get('/moe_policy', async ctx => {
+    ctx.render('moe_policy')
+})
 //write new policies in the database
-    router.post('/moe_policy', koaBody, async ctx => {
-        const policy_info = ctx.request.body
+router.post('/moe_policy', koaBody, async ctx => {
+    const policy_info = ctx.request.body
 
-        const saved = await storePolicies(policy_info)
-        if (saved === "saved") {
-            ctx.body = "A new policy has been saved"
-        }
-        else {
-            ctx.body = "Error school policy admin. Please try again"
-        }
-    })
+    const saved = await storePolicies(policy_info)
+    if (saved === "saved") {
+        ctx.body = "A new policy has been saved"
+    }
+    else {
+        ctx.body = "Error school policy admin. Please try again"
+    }
+})
 
 //store teacher details
-    async function storePolicies(policy_info) {
-        const ministry = new Ministry({
-            policy: {
-                title: policy_info.title,
-                description: policy_info.description
-            }
+async function storePolicies(policy_info) {
+    const ministry = new Ministry({
+        policy: {
+            title: policy_info.title,
+            description: policy_info.description
+        }
+    })
+    try {
+        await ministry.save()
+        return "saved"
+    } catch (err) {
+        return err
+    }
+}
+
+//process admin registration
+router.post('/register_admin', koaBody, async ctx => {
+    const details = ctx.request.body
+    if (details !== undefined) {
+        const register_status = await registerAdmin(ctx, details)
+        // Redirect the user in accordance to the error they made during registration
+        switch (register_status) {
+            case 'fill_all':
+                ctx.body = 'Please fill all required fields'
+                break
+            case  'password_missmatch':
+                ctx.body = 'Your passwords do not match! Please try again'
+                break
+            case 'saved':
+                ctx.redirect('/admin')
+                break
+            default:
+                ctx.body = 'Saving your details was unsuccessful and the error is ' + register_status
+                break
+        }
+    }
+})
+
+//load the admin dashboard
+function loadSystemAdminDashboard(ctx) {
+    ctx.render('system_admin_dashboard', {ctx: ctx})
+}
+
+//register admin
+async function registerAdmin(ctx, admin) {
+    if (admin.password.length < 1 || admin.cpass.length < 1 || admin.email.length < 1 || admin.username.length < 1) {
+        return "fill_all"
+    }
+    if (admin.password !== admin.cpass) {
+        return 'password_missmatch'
+    }
+    //TODO hash the password,email
+    const newPerson = new Administrator({
+        email: admin.email,
+        username: admin.username,
+        password: admin.password,
+        role: 'system'
+    })
+    try {
+        const saved = await newPerson.save()
+        ctx.session.id = saved.id
+        ctx.session.username = saved.username
+        ctx.session.email = saved.email
+        ctx.session.role = saved.role
+        return 'saved'
+    }
+    catch (err) {
+        return err
+    }
+}
+
+//Generate a random 2 character string to be used to create the UPI
+function randomString(len, charSet) {
+    let randomString = ''
+    for (let i = 0; i < len; i++) {
+        let randomPoz = Math.floor(Math.random() * charSet.length)
+        randomString += charSet.substring(randomPoz, randomPoz + 1)
+    }
+    return randomString
+}
+
+//display school registration form
+router.get('/register_school', ctx => {
+    ctx.render('register_school')
+})
+
+//process school registration
+router.post('/register_school', koaBody, async ctx => {
+    const status = await storeSchoolDetails(ctx.request.body)
+    if (status === 'saved') {
+        ctx.body = 'School details successfully saved'
+    } else {
+        ctx.body = status
+    }
+})
+
+//Store school details
+async function storeSchoolDetails(school_info) {
+    let upi = randomString(2, 'BCDFGHJKLMNPQRSUVWXZ')
+    //check if the upi exists in the db. If yes, request a new one, if not assign it to this school
+    const available = await School.findOne({
+        _id: upi
+    }).select('_id').exec()
+    if (available === null) {
+        const school = new School({
+            _id: upi,
+            name: school_info.name,
+            category: school_info.category,
         })
         try {
-            await ministry.save()
-            return "saved"
+            await school.save()
+            return 'saved'
+
         } catch (err) {
             return err
         }
     }
-
-//process admin registration
-    router.post('/register_admin', koaBody, async ctx => {
-        const details = ctx.request.body
-        if (details !== undefined) {
-            const register_status = await registerAdmin(ctx, details)
-            // Redirect the user in accordance to the error they made during registration
-            switch (register_status) {
-                case 'fill_all':
-                    ctx.body = 'Please fill all required fields'
-                    break
-                case  'password_missmatch':
-                    ctx.body = 'Your passwords do not match! Please try again'
-                    break
-                case 'saved':
-                    ctx.redirect('/admin')
-                    break
-                default:
-                    ctx.body = 'Saving your details was unsuccessful and the error is ' + register_status
-                    break
-            }
-        }
-    })
-
-//load the admin dashboard
-    function loadSystemAdminDashboard(ctx) {
-        ctx.render('system_admin_dashboard', {ctx: ctx})
+    else {
+        storeSchoolDetails(school_info)
     }
 
-//register admin
-    async function registerAdmin(ctx, admin) {
-        if (admin.password.length < 1 || admin.cpass.length < 1 || admin.email.length < 1 || admin.username.length < 1) {
-            return "fill_all"
-        }
-        if (admin.password !== admin.cpass) {
-            return 'password_missmatch'
-        }
-        //TODO hash the password,email
-        const newPerson = new Administrator({
-            email: admin.email,
-            username: admin.username,
-            password: admin.password,
-            role: 'system'
-        })
-        try {
-            const saved = await newPerson.save()
-            ctx.session.id = saved.id
-            ctx.session.username = saved.username
-            ctx.session.email = saved.email
-            ctx.session.role = saved.role
-            return 'saved'
-        }
-        catch (err) {
-            return err
-        }
-    }
-
-//Generate a random 2 character string to be used to create the UPI
-    function randomString(len, charSet) {
-        let randomString = ''
-        for (let i = 0; i < len; i++) {
-            let randomPoz = Math.floor(Math.random() * charSet.length)
-            randomString += charSet.substring(randomPoz, randomPoz + 1)
-        }
-        return randomString
-    }
-
-//display school registration form
-    router.get('/register_school', ctx => {
-        ctx.render('register_school')
-    })
-
-//process school registration
-    router.post('/register_school', koaBody, async ctx => {
-        const status = await storeSchoolDetails(ctx.request.body)
-        if (status === 'saved') {
-            ctx.body = 'School details successfully saved'
-        } else {
-            ctx.body = status
-        }
-    })
-
-//Store school details
-    async function storeSchoolDetails(school_info) {
-        let upi = randomString(2, 'BCDFGHJKLMNPQRSUVWXZ')
-        //check if the upi exists in the db. If yes, request a new one, if not assign it to this school
-        const available = await School.findOne({
-            _id: upi
-        }).select('_id').exec()
-        if (available === null) {
-            const school = new School({
-                _id: upi,
-                name: school_info.name,
-                category: school_info.category,
-            })
-            try {
-                await school.save()
-                return 'saved'
-
-            } catch (err) {
-                return err
-            }
-        }
-        else {
-            storeSchoolDetails(school_info)
-        }
-
-    }
+}
 
 //get students
-    router.get('/admin/students', async ctx => {
-        ctx.render('students', {students: await Student.find().select('id surname firstname')})
-    })
+router.get('/admin/students', async ctx => {
+    ctx.render('students', {students: await Student.find().select('id surname firstname')})
+})
 //get teachers
-    router.get('/admin/teachers', async ctx => {
-        ctx.render('teachers', {teachers: await Teacher.find().select('id surname firstname')})
-    })
+router.get('/admin/teachers', async ctx => {
+    ctx.render('teachers', {teachers: await Teacher.find().select('id surname firstname')})
+})
 //get schools
-    router.get('/admin/schools', async ctx => {
-        ctx.render('schools', {schools: await School.find().select('id name category')})
+router.get('/admin/schools', async ctx => {
+    ctx.render('schools', {schools: await School.find().select('id name category')})
 
-    })
+})
 //get school admins
-    router.get('/admin/school_admins', async ctx => {
-        ctx.render('school_admins', {school_admins: await SchoolAdmin.find().select('upi username')})
-    })
+router.get('/admin/school_admins', async ctx => {
+    ctx.render('school_admins', {school_admins: await SchoolAdmin.find().select('upi username')})
+})
 
 //get individual school details
-    router.get('/admin/schools/:id', async ctx => {
-        await School.findOne({_id: ctx.params.id}).exec().then(function (school) {
-            ctx.render('school_info', {school: school})
-        })
-
+router.get('/admin/schools/:id', async ctx => {
+    await School.findOne({_id: ctx.params.id}).exec().then(function (school) {
+        ctx.render('school_info', {school: school})
     })
+
+})
 //get individual student details
 router.get('/admin/students/:id', async ctx => {
     await Student.findOne({_id: ctx.params.id}).exec().then(function (student) {
@@ -453,22 +452,72 @@ router.get('/admin/students/:id', async ctx => {
     })
 })
 
+//get individual teacher details
 router.get('/admin/teachers/:id', async ctx => {
     await Teacher.findOne({_id: ctx.params.id}).exec().then(function (teacher) {
         ctx.render('teacher_info', {teacher: teacher})
     })
 })
 
-//get individual teacher details
-//use middleware
-    app.use(cors())
-// app.use(serve({rootDir: './public', path: 'public'}))
-    app.use(session(CONFIG, app))
-    pug.use(app)
-    app.use(router.routes())
-    app.listen(3002, () => {
-        console.log("Server running")
+//display teacher registration form
+router.get('/update_teacher_info/:id', async ctx => {
+    await Teacher.findOne({_id: ctx.params.id}).exec().then(function (teacher) {
+        ctx.render('update_teacher_info', {teacher: teacher})
     })
+})
+
+//register new student details in the database
+router.post('/update_teacher_info', koaBody, async ctx => {
+    const teacher_info = ctx.request.body
+
+    await updateTeacherDetails(teacher_info).then(async function (teacher) {
+        ctx.redirect(`/admin/teachers/${teacher._id}`)
+    })
+})
+
+//update school details
+async function updateTeacherDetails(teacher) {
+    console.log(teacher)
+    return await Teacher.findOneAndUpdate({
+            _id: teacher.id
+        }, {
+            _id: teacher.tsc,
+            surname: teacher.surname,
+            first_name: teacher.first_name,
+            second_name: teacher.second_name,
+            birthdate: teacher.dob,
+            gender: teacher.gender,
+            contact: {
+                email: teacher.email,
+                phone1: teacher.phone1,
+                phone2: teacher.phone2,
+                address: teacher.address
+
+            },
+            posting_history: {
+                reporting_date: teacher.date_posted
+            },
+            teaching_subjects: teacher.subjects
+            ,
+            responsibilities: {
+                name: teacher.responsibility,
+                date_assigned: teacher.date_assigned
+
+            }
+
+        }
+    ).exec()
+}
+
+//use middleware
+app.use(cors())
+// app.use(serve({rootDir: './public', path: 'public'}))
+app.use(session(CONFIG, app))
+pug.use(app)
+app.use(router.routes())
+app.listen(3002, () => {
+    console.log("Server running")
+})
 
 /**
  * TODO reroute all urls to Backbone

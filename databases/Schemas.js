@@ -101,14 +101,21 @@ const TeacherSchema = new Schema({
             }
         }]
     },
-    teaching_subjects: [{
+    teaching_subjects: {
         name: String
-    }],
-    responsibilities: [{
-        name: String,
-        date_assigned: Date,
-        date_relieved: Date
-    }]
+    },
+    //TODO store previous responsibilities
+    responsibilities: {
+        name: {
+            type:String
+        },
+        date_assigned: {
+            type:Date
+        },
+        date_relieved: {
+            type:Date
+        }
+    }
 })
 const SchoolSchema = new Schema({
     _id: {

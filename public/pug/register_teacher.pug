@@ -4,20 +4,28 @@ html
         title Nemis Imeweza
     body
         //TODO add posting history and teaching subjects in the form
+        //TODO if the school admin is the one registering the teacher, take their upi as current school
         form(action="/register_teacher" method="post")
+            br
             label(for="tsc") TSC ID
             input(type="text" name="tsc" id="tsc" required="true")
+            br
             label(for="surname") Surname
             input(type="text" name="surname" id="surname" required="true")
+            br
             label(for="first_name") First name
             input(type="text" name="first_name" id="first_name" required="true")
+            br
             label(for="second_name") Second name
             input(type="text" name="second_name" id="second_name")
+            br
             label(for="dob") Date of birth
             input(type="date" name="dob" id="dob" required="true")
-            p Gender
+            br
+            span Gender &nbsp;
             label(for="male") Male
             input(type="radio" name="gender" id="male" value="male")
-            label(for="female") Male
+            label(for="female") &nbsp; Female
             input(type="radio" name="gender" id="female" value="female")
+            br
             input(type="submit" name="submit" value="Submit")

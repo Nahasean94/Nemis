@@ -1,0 +1,54 @@
+doctype html
+html
+    head
+        title Nemis Imeweza
+    body
+        //TODO add posting history and teaching subjects in the form
+        form(action="/update_teacher_info" method="post")
+            input(type="hidden" name="id" id="id" value=teacher._id)
+            label(for="tsc") TSC ID
+            input(type="text" name="tsc" id="tsc" value=teacher._id required="true")
+            br
+            label(for="surname") Surname
+            input(type="text" name="surname" id="surname" value=teacher.surname required="true")
+            br
+            label(for="first_name") First name
+            input(type="text" name="first_name" id="first_name" value=teacher.first_name required="true")
+            br
+            label(for="second_name") Second name
+            input(type="text" name="second_name" id="second_name" value=teacher.second_name)
+            br
+            label(for="dob") Date of birth
+            input(type="date" name="dob" id="dob" value=teacher.birthdate required="true")
+            br
+            span Gender &nbsp;
+            label(for="male") Male
+            input(type="radio" name="gender" id="male" value="male")
+            label(for="female") &nbsp; Female
+            input(type="radio" name="gender" id="female" value="female")
+            br
+            label(for="email") Email
+            input(type="email" name="email" id="email" value="email")
+            br
+            label(for="phone1") Phone number 1
+            input(type="number" name="phone1" id="phone1" value="phone1")
+            br
+            label(for="phone2") Phone number 2
+            input(type="number" name="phone2" id="phone2" value="phone2")
+            br
+            label(for="address") address
+            input(type="text" name="address" id="address" value="address" placeholder="e.g P.O Box 320 Nairobi")
+            br
+            label(for="subjects") Teaching subjects
+            input(type="text" name="subjects" id="subjects" value="subjects" placeholder="e.g English, Biology, Geography")
+            br
+            label(for="responsibility") Current Responsibility
+            input(type="text" name="responsibility" id="responsibility" )
+            br
+            label(for="date_assigned") Date assigned the responsibility
+            input(type="date" name="date_assigned" id="date_assigned" value="date_assigned")
+            br
+            label(for="date_posted") Date posted at current school
+            input(type="date" name="date_posted" id="date_posted" value="date_posted")
+
+            input(type="submit" name="submit" value="Submit")
