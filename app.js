@@ -335,6 +335,28 @@ router.post('/register_admin', koaBody, async ctx => {
     }
 })
 
+//register school admin
+router.get('/admin/register_school_admin', ctx => {
+    ctx.render('register_school_admin')
+})
+//receive form details to register new school admin
+router.post('/admin/register_school_admin', koaBody, async ctx => {
+    await saveSchoolAdminDetails(ctx.request.body).then(function (admin) {
+        ctx.redirect('/admin/school_admins')
+    })
+})
+
+//saved school admin details
+async function saveSchoolAdminDetails(admin) {
+    //TODO validate passwords match and other validations
+    return await new SchoolAdmin({
+        upi: admin.upi,
+        username: admin.username,
+        password: admin.password,
+        date: new Date()
+    }).save()
+}
+
 //load the admin dashboard
 function loadSystemAdminDashboard(ctx) {
     ctx.render('system_admin_dashboard', {ctx: ctx})
@@ -536,7 +558,7 @@ async function updateStudentDetails(student) {
             gender: student.gender,
             transfers: {
                 //TODO valid that school must be present
-               // current_school: ,
+                // current_school: ,
                 reporting_date: student.reporting_date
             }
         }
@@ -550,7 +572,7 @@ app.use(session(CONFIG, app))
 pug.use(app)
 app.use(router.routes())
 app.listen(3002, () => {
-    console.log("Server running")
+    console.log("Server running on port 3002")
 })
 
 /**

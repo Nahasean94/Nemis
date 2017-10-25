@@ -245,15 +245,6 @@ const SchoolAdminSchema = new Schema({
     password: {
         type: String,
         required: [true, 'Password is required']
-    },
-    contact: {
-        email: {
-            type: String,
-            set: setEmail,
-        },
-        phone1: Number,
-        phone2: Number,
-        address: String
     }
 })
 const AdministratorSchema = new Schema({
