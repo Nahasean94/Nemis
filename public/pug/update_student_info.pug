@@ -1,0 +1,35 @@
+doctype html
+html
+    head
+        title Nemis Imeweza
+    body
+        //TODO add posting history and teaching subjects in the form
+        form(action="/update_student_info" method="post")
+            input(type="hidden" name="upi" id="upi" value=student._id)
+            label(for="surname") Surname
+            input(type="text" name="surname" id="surname" value=student.surname required="true")
+            br
+            label(for="first_name") First name
+            input(type="text" name="first_name" id="first_name" value=student.first_name required="true")
+            br
+            label(for="second_name") Second name
+            input(type="text" name="second_name" id="second_name" value=student.second_name)
+            br
+            label(for="dob") Date of birth
+            input(type="date" name="dob" id="dob" value=student.birthdate required="true")
+            br
+            span Gender &nbsp;
+            label(for="male") Male
+            input(type="radio" name="gender" id="male" value="male")
+            label(for="female") &nbsp; Female
+            input(type="radio" name="gender" id="female" value="female")
+            br
+            label(for="current_school") Current school
+            input(type="text" name="current_school" id="current_school")
+            br
+            //TODO add clearance functionality
+            label(for="reporting_date") Reporting date
+            input(type="date" name="reporting_date" id="reporting_date")
+            br
+
+            input(type="submit" name="submit" value="Submit")

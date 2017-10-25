@@ -509,6 +509,40 @@ async function updateTeacherDetails(teacher) {
     ).exec()
 }
 
+//update student info
+router.get('/update_student_info/:id', async ctx => {
+    await Student.findOne({_id: ctx.params.id}).exec().then(function (student) {
+        ctx.render('update_student_info', {student: student})
+    })
+})
+//register new student details in the database
+router.post('/update_student_info', koaBody, async ctx => {
+    const student_info = ctx.request.body
+    await updateStudentDetails(student_info).then(async function (student) {
+        ctx.redirect(`/admin/students/${student._id}`)
+    })
+})
+
+//update school details
+async function updateStudentDetails(student) {
+    console.log(student)
+    return await Student.findOneAndUpdate({
+            _id: student.upi
+        }, {
+            surname: student.surname,
+            first_name: student.first_name,
+            second_name: student.second_name,
+            birthdate: student.dob,
+            gender: student.gender,
+            transfers: {
+                //TODO valid that school must be present
+               // current_school: ,
+                reporting_date: student.reporting_date
+            }
+        }
+    ).exec()
+}
+
 //use middleware
 app.use(cors())
 // app.use(serve({rootDir: './public', path: 'public'}))
