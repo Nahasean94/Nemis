@@ -1,0 +1,20 @@
+doctype html
+html
+    head
+        title student Information
+    body
+        a(href="/register_student") Register Student
+        br
+        a(href="/register_teacher") Register Teacher
+        br
+        a(href="/edit_student_info/"+student._id) Edit student information
+        br
+        ul
+            li UPI: #{student._id}
+            li Surname: #{student.surname}
+            li First name: #{student.first_name}
+            li Second name: #{student.second_name}
+            li Date of birth: #{student.birthdate.toDateString()}
+            li Gender: #{student.gender}
+            li Transfers: #{student.transfers}
+            li Performance: #{student.performance}

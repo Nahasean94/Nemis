@@ -202,7 +202,6 @@ router.post('/register_teacher', koaBody, async ctx => {
         ctx.body = "Error saving teacher admin. Please try again. The error is " + saved
     }
 })
-const mode = {}
 
 //store teacher details
 async function storeTeacherDetails(teacher_info) {
@@ -314,10 +313,6 @@ console.log(school)
         }
     }
 
-//display admin registration page
-    router.get('/register_admin', async ctx => {
-        ctx.render('register_admin')
-    })
 //process admin registration
     router.post('/register_admin', koaBody, async ctx => {
         const details = ctx.request.body
@@ -428,29 +423,43 @@ console.log(school)
 
 //get students
     router.get('/admin/students', async ctx => {
-        ctx.body = 'students'
+        ctx.render('students', {students: await Student.find().select('id surname firstname')})
     })
 //get teachers
     router.get('/admin/teachers', async ctx => {
-        ctx.body = 'teachers'
+        ctx.render('teachers', {teachers: await Teacher.find().select('id surname firstname')})
     })
 //get schools
     router.get('/admin/schools', async ctx => {
         ctx.render('schools', {schools: await School.find().select('id name category')})
 
     })
-//get school
+//get school admins
+    router.get('/admin/school_admins', async ctx => {
+        ctx.render('school_admins', {school_admins: await SchoolAdmin.find().select('upi username')})
+    })
+
+//get individual school details
     router.get('/admin/schools/:id', async ctx => {
         await School.findOne({_id: ctx.params.id}).exec().then(function (school) {
             ctx.render('school_info', {school: school})
         })
 
     })
-//get school admins
-    router.get('/admin/school_admins', async ctx => {
-        ctx.body = 'school_admins'
+//get individual student details
+router.get('/admin/students/:id', async ctx => {
+    await Student.findOne({_id: ctx.params.id}).exec().then(function (student) {
+        ctx.render('student_info', {student: student})
     })
+})
 
+router.get('/admin/teachers/:id', async ctx => {
+    await Teacher.findOne({_id: ctx.params.id}).exec().then(function (teacher) {
+        ctx.render('teacher_info', {teacher: teacher})
+    })
+})
+
+//get individual teacher details
 //use middleware
     app.use(cors())
 // app.use(serve({rootDir: './public', path: 'public'}))

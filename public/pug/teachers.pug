@@ -1,0 +1,13 @@
+doctype
+html
+    head
+        title Schools
+    body
+        -if(teachers){
+            p we have #{teachers.length} teachers
+            ul
+                -for(let i=0;i<teachers.length;i++){
+                li
+                    a(href='/admin/teachers/'+teachers[i]._id) #{teachers[i].surname}, #{teachers[i].firstname}, #{teachers[i]._id}
+                -}
+        -}

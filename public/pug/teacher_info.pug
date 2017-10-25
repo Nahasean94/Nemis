@@ -1,0 +1,20 @@
+doctype html
+html
+    head
+        title Teacher Information
+    body
+        a(href="/register_student") Register Student
+        br
+        a(href="/register_teacher") Register Teacher
+        br
+        a(href="/edit_teacher_info/"+teacher._id) Edit teacher information
+        br
+        ul
+            li TSC Number: #{teacher._id}
+            li Surname: #{teacher.surname}
+            li First name: #{teacher.first_name}
+            li Second name: #{teacher.second_name}
+            li Date of birth: #{teacher.birthdate.toDateString()}
+            li Responsibilities: #{teacher.responsibilities}
+            li Teaching subjects: #{teacher.teaching_subjects}
+            li Posting history: #{teacher.posting_history}
