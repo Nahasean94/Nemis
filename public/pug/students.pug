@@ -3,11 +3,15 @@ html
     head
         title Schools
     body
+        -if(school_id){
+        a(href="/register_student") Register new student
+        -}
+        br
         -if(students){
-            p we have #{students.length} students
-            ul
-                -for(let i=0;i<students.length;i++){
-                li
-                    a(href='/admin/students/'+students[i]._id) #{students[i].surname}, #{students[i].firstname}, #{students[i]._id}
-                -}
+        p we have #{students.length} students
+        ul
+            -for(let i=0;i<students.length;i++){
+            li
+                a(href='/admin/students/' + students[i]._id) #{students[i].surname}, #{students[i].firstname}, #{students[i].upi}
+            -}
         -}

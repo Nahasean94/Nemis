@@ -38,7 +38,9 @@ const StudentSchema = new Schema({
         path: String,
     }],
     transfers: {
-        current_school: {type: Schema.Types.ObjectId, ref: 'School'},
+        current_school: {type: Schema.Types.ObjectId, ref: 'School',
+        required:[true,'School UPI is required']
+        },
         reporting_date: {
             type: Date
         },

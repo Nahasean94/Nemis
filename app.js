@@ -163,13 +163,21 @@ async function storeStudentDetails(student) {
     //     upi: upi
     // }).select('upi').exec()
     // if (available === null) {
+    await School.findOne({
+        upi:student.upi
+    }).select('_id').exec().then(function (school_id) {
+        student.school_id=school_id
+    })
     const studnt_ = new Student({
         upi: upi,
         surname: student.surname,
         first_name: student.first_name,
         second_name: student.second_name,
         birthdate: student.dob,
-        gender: student.gender
+        gender: student.gender,
+        transfers: {
+            current_school:student.school_id
+        }
     })
     try {
         await studnt_.save()
@@ -597,15 +605,38 @@ router.get('/schools/:upi', async ctx => {
 router.post('/school_admin_login', koaBody, async ctx => {
     await handleSchoolAdminLogin(ctx.request.body).then(function (admin_details) {
         console.log(admin_details)
-        ctx.body = admin_details
+        if(admin_details===null){
+            ctx.body='invalid credntails. Please try again'
+        }
+        else
+        {
+        ctx.render('school_admin_dashboard', {school_id: admin_details.school_id})
+        }
     })
 })
 
+//fetch admin from db
 async function handleSchoolAdminLogin(admin) {
     return SchoolAdmin.findOne({
         username: admin.username,
-        password: admin.password
-    }).select('username').exec()
+        password: admin.password,
+        school_id:admin.school_id,
+    }).select('username school_id').exec()
+}
+
+//fetch students of a particular school
+router.get('/schools/students/:school_id', async ctx => {
+    await fetchSchoolStudents(ctx.params.school_id).then(function (students) {
+        console.log(students)
+        ctx.render('students', {students: students,school_id:ctx.params.school_id})
+    })
+})
+
+async function fetchSchoolStudents(school_id) {
+    console.log(school_id)
+    return await Student.find({
+        'transfers.current_school': school_id
+    }).select('upi surname firstname').exec()
 }
 
 //use middleware

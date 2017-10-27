@@ -3,7 +3,10 @@ html
     head
         title Nemis Imeweza
     body
+        //TODO automatically fetch the school id
         form(action="/register_student" method="post")
+            label(for="upi") School UPI
+            input(type="text" name="upi" id="upi" required="true")
             label(for="surname") Surname
             input(type="text" name="surname" id="surname" required="true")
             label(for="first_name") First name
