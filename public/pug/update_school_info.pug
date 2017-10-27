@@ -4,7 +4,7 @@ html
         title Nemis Imeweza
     body
         form(method="post" action="/update_school_info")
-            input(type="hidden" value=school._id name="upi")
+            input(type="hidden" value=school._id name="id")
             label(for="name") Name
             input(type="text" name="name" value=school.name id="name" required="true")
             br

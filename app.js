@@ -244,21 +244,26 @@ router.get('/update_school_info/:upi', async ctx => {
         ctx.render('update_school_info', {school: school})
     })
 })
-
+router.get('/schools/update_school_info/:id',async ctx=>{
+    await School.findOne({_id: ctx.params.id}).exec().then(function (school) {
+        ctx.render('update_school_info', {school: school})
+    })
+})
 //update school_info details in the database
 router.post('/update_school_info', koaBody, async ctx => {
     const school_info = ctx.request.body
 
     await updateSchoolDetails(school_info).then(async function (school) {
         console.log(school)
-        ctx.redirect(`/admin/schools/${await school.upi}`)
+        ctx.redirect(`/admin/schools/${school.upi}`)
     })
 })
 
 //update school details
 async function updateSchoolDetails(school) {
+    console.log(school)
     return await School.findOneAndUpdate({
-            upi: school.upi
+            _id: school.id
         }, {
             name: school.name,
             location: school.location,
