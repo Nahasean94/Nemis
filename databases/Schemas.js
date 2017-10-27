@@ -56,7 +56,7 @@ const StudentSchema = new Schema({
     }
 })
 const TeacherSchema = new Schema({
-   upi: {
+   tsc: {
         type: String,
         unique: true,
         required: [true, 'TSC number is required']

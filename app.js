@@ -164,9 +164,9 @@ async function storeStudentDetails(student) {
     // }).select('upi').exec()
     // if (available === null) {
     await School.findOne({
-        upi:student.upi
+        upi: student.upi
     }).select('_id').exec().then(function (school_id) {
-        student.school_id=school_id
+        student.school_id = school_id
     })
     const studnt_ = new Student({
         upi: upi,
@@ -176,7 +176,7 @@ async function storeStudentDetails(student) {
         birthdate: student.dob,
         gender: student.gender,
         transfers: {
-            current_school:student.school_id
+            current_school: student.school_id
         }
     })
     try {
@@ -202,31 +202,44 @@ router.get('/register_teacher', async ctx => {
 router.post('/register_teacher', koaBody, async ctx => {
     const teacher_info = ctx.request.body
 
-    const saved = await storeTeacherDetails(teacher_info)
+    await storeTeacherDetails(teacher_info).then(function (saved) {
     if (saved === "saved") {
         ctx.body = "A new teacher has been saved"
     }
     else {
         ctx.body = "Error saving teacher admin. Please try again. The error is " + saved
     }
+    })
 })
 
 //store teacher details
 async function storeTeacherDetails(teacher_info) {
-    const teacher = new Teacher({
-        tsc: teacher_info.tsc,
-        surname: teacher_info.surname,
-        first_name: teacher_info.first_name,
-        second_name: teacher_info.second_name,
-        birthdate: teacher_info.dob,
-        gender: teacher_info.gender
+   return await School.findOne({
+        upi: teacher_info.school_upi
+    }).select('_id').exec().then(async function (school) {
+        if (school === null) {
+            return "No school matches that UPI"
+        }
+        else {
+            const teacher = new Teacher({
+                tsc: teacher_info.tsc,
+                surname: teacher_info.surname,
+                first_name: teacher_info.first_name,
+                second_name: teacher_info.second_name,
+                birthdate: teacher_info.dob,
+                gender: teacher_info.gender,
+                posting_history: {
+                    current_school:school
+                }
+            })
+            try {
+                await teacher.save()
+                return "saved"
+            } catch (err) {
+                return err
+            }
+        }
     })
-    try {
-        await teacher.save()
-        return "saved"
-    } catch (err) {
-        return err
-    }
 }
 
 //display school update_info form
@@ -605,12 +618,11 @@ router.get('/schools/:upi', async ctx => {
 router.post('/school_admin_login', koaBody, async ctx => {
     await handleSchoolAdminLogin(ctx.request.body).then(function (admin_details) {
         console.log(admin_details)
-        if(admin_details===null){
-            ctx.body='invalid credntails. Please try again'
+        if (admin_details === null) {
+            ctx.body = 'invalid credntails. Please try again'
         }
-        else
-        {
-        ctx.render('school_admin_dashboard', {school_id: admin_details.school_id})
+        else {
+            ctx.render('school_admin_dashboard', {school_id: admin_details.school_id})
         }
     })
 })
@@ -620,23 +632,36 @@ async function handleSchoolAdminLogin(admin) {
     return SchoolAdmin.findOne({
         username: admin.username,
         password: admin.password,
-        school_id:admin.school_id,
+        school_id: admin.school_id,
     }).select('username school_id').exec()
 }
 
 //fetch students of a particular school
 router.get('/schools/students/:school_id', async ctx => {
     await fetchSchoolStudents(ctx.params.school_id).then(function (students) {
-        console.log(students)
-        ctx.render('students', {students: students,school_id:ctx.params.school_id})
+        ctx.render('students', {students: students, school_id: ctx.params.school_id})
     })
 })
 
+//query students from the database
 async function fetchSchoolStudents(school_id) {
-    console.log(school_id)
     return await Student.find({
         'transfers.current_school': school_id
     }).select('upi surname firstname').exec()
+}
+
+//fetch all the teachers of a particular school
+router.get('/schools/teachers/:school_id', async ctx => {
+    await fetchSchoolTeachers(ctx.params.school_id).then(function (teachers) {
+        ctx.render('teachers', {teachers: teachers, school_admin: true})
+    })
+})
+
+//query teachers from the database
+async function fetchSchoolTeachers(school_id) {
+    return await Teacher.find({
+        "posting_history.current_school": school_id
+    }).select('tsc surname firstname').exec()
 }
 
 //use middleware
