@@ -1,0 +1,14 @@
+doctype
+html
+    head
+        title School admin login
+    body
+        p Please enter the login credentials for #{school.name}
+        br
+        form(action="/school_admin_login" method="post")
+            input(type="hidden" value=school._id name="school_id")
+            label(for="username") Username
+            input(type="text" id="username" name="username")
+            label(for="password") Password
+            input(type="password" id="password" name="password")
+            input(type="submit" name="submit" value="Login")

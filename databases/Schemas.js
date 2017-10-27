@@ -7,9 +7,9 @@ const mongoose = require('mongoose')
 const Schema = mongoose.Schema
 
 const StudentSchema = new Schema({
-    _id: {
+   upi: {
         type: String,
-        unique:true,
+        unique: true,
         required: [true, 'UPI is a required field']
     },
     surname: {
@@ -54,9 +54,9 @@ const StudentSchema = new Schema({
     }
 })
 const TeacherSchema = new Schema({
-    _id: {
+   upi: {
         type: String,
-        unique:true,
+        unique: true,
         required: [true, 'TSC number is required']
     },
     surname: {
@@ -107,20 +107,20 @@ const TeacherSchema = new Schema({
     //TODO store previous responsibilities
     responsibilities: {
         name: {
-            type:String
+            type: String
         },
         date_assigned: {
-            type:Date
+            type: Date
         },
         date_relieved: {
-            type:Date
+            type: Date
         }
     }
 })
 const SchoolSchema = new Schema({
-    _id: {
+    upi: {
         type: String,
-        unique:true,
+        unique: true,
         required: [true, 'UPI is required']
     },
     name: {
@@ -204,9 +204,9 @@ const MinistrySchema = new Schema({
     }]
 })
 const DeceasedSchema = new Schema({
-    _id: {
+   upi: {
         type: String,
-        unique:true,
+        unique: true,
         required: [true, 'UPI is required']
     },
     date: {
@@ -218,10 +218,10 @@ const DeceasedSchema = new Schema({
     death_certificate: String
 })
 const RetiredSchema = new Schema({
-    _id: {
+   upi: {
         type: String,
-        unique:true,
-        required: [true, 'UPI is required']
+        unique: true,
+        required: [true, 'TSC number is required']
     },
     date: {
         type: Date,
@@ -230,27 +230,35 @@ const RetiredSchema = new Schema({
     school_id: {type: Schema.Types.ObjectId, ref: 'School'}
 })
 const SchoolAdminSchema = new Schema({
-    upi: {
-        type: {type: Schema.Types.ObjectId, ref: 'School'},
+    school_id: {
+        type: Schema.Types.ObjectId,
+        ref: 'School',
+        required:[true,'UPI is required']
     },
-    date: {
-        type: Date,
-        default: new Date()
-    },
+    date:
+        {
+            type: Date,
+            default:
+                new Date()
+        }
+    ,
     username: {
         type: String,
-        required: [true, 'Username is required']
-    },
-    //TODO read about encryption and hashing in node and implement it here
+        required:
+            [true, 'Username is required']
+    }
+    ,
+//TODO read about encryption and hashing in node and implement it here
     password: {
         type: String,
-        required: [true, 'Password is required']
+        required:
+            [true, 'Password is required']
     }
 })
 const AdministratorSchema = new Schema({
     email: {
         type: String,
-        unique:true,
+        unique: true,
         required: [true, 'Email is required'],
         set: setEmail,
     },
@@ -266,9 +274,9 @@ const AdministratorSchema = new Schema({
         type: String,
         enum: ['system', 'nemis']
     },
-    date:{
-        type:Date,
-        default:new Date()
+    date: {
+        type: Date,
+        default: new Date()
     }
 })
 

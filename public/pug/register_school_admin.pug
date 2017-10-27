@@ -3,10 +3,9 @@ html
     head
         title Register school admin
     body
-        //TODO add posting history and teaching subjects in the form
         form(action="/admin/register_school_admin" method="post")
             label(for="upi") UPI of school
-            input(type="text" name="upi" id="upi" required="upi")
+            input(type="text" name="upi" id="upi" required="true")
             br
             label(for="username") Username (One word. You can use hyphens, dots, underscores)
             input(type="text" name="username" id="username" required="true")

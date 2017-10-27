@@ -51,7 +51,7 @@ router.post('/search', koaBody, async ctx => {
 
 async function searchUPI(upi) {
     return Student.findOne({
-        _id: upi
+        upi: upi
     }).select('name path').exec()
 }
 
@@ -61,7 +61,7 @@ async function searchUPI(upi) {
 //     ctx.render('school_admin')
 // })
 //handle school admin login information
-router.post('/school-admin', koaBody, async ctx => {
+router.post('/school_admin', koaBody, async ctx => {
     const info = ctx.request.body
     const username = info.username
     const password = info.password
@@ -73,7 +73,7 @@ router.post('/school-admin', koaBody, async ctx => {
 //check for login information
 async function checkLogin(ctx, username, password) {
     return SchoolAdmin.findOne({
-        _id: ctx.session.upi,
+        upi: ctx.session.upi,
         username: username,
         password: password
     }).exec()
@@ -153,18 +153,18 @@ router.get('/logout', async ctx => {
 
 //store student details
 async function storeStudentDetails(student) {
-    const preHypen = randomString(2, 'BCDFGHJKLMNPQRSVWXYZ')
+    const preHyphen = randomString(2, 'BCDFGHJKLMNPQRSVWXYZ')
     const mid = randomString(2, 'BCDFGHJKLMNPQRSVWXYZ')
     const postHyphen = randomString(2, '0123456789')
-    const upi = `${preHypen}-${mid}-${postHyphen}`
+    const upi = `${preHyphen}-${mid}-${postHyphen}`
     // const upi='WJ-KG-01'
     //check if any student is registered with the upi, if not register the upi, if yes recurse through the function
     // const available = await Student.findOne({
-    //     _id: upi
-    // }).select('_id').exec()
+    //     upi: upi
+    // }).select('upi').exec()
     // if (available === null) {
     const studnt_ = new Student({
-        _id: upi,
+        upi: upi,
         surname: student.surname,
         first_name: student.first_name,
         second_name: student.second_name,
@@ -206,7 +206,7 @@ router.post('/register_teacher', koaBody, async ctx => {
 //store teacher details
 async function storeTeacherDetails(teacher_info) {
     const teacher = new Teacher({
-        _id: teacher_info.tsc,
+        tsc: teacher_info.tsc,
         surname: teacher_info.surname,
         first_name: teacher_info.first_name,
         second_name: teacher_info.second_name,
@@ -222,8 +222,8 @@ async function storeTeacherDetails(teacher_info) {
 }
 
 //display school update_info form
-router.get('/update_school_info/:id', async ctx => {
-    await School.findOne({_id: ctx.params.id}).exec().then(function (school) {
+router.get('/update_school_info/:upi', async ctx => {
+    await School.findOne({upi: ctx.params.upi}).exec().then(function (school) {
         ctx.render('update_school_info', {school: school})
     })
 })
@@ -234,14 +234,14 @@ router.post('/update_school_info', koaBody, async ctx => {
 
     await updateSchoolDetails(school_info).then(async function (school) {
         console.log(school)
-        ctx.redirect(`/admin/schools/${await school._id}`)
+        ctx.redirect(`/admin/schools/${await school.upi}`)
     })
 })
 
 //update school details
 async function updateSchoolDetails(school) {
     return await School.findOneAndUpdate({
-            _id: school.upi
+            upi: school.upi
         }, {
             name: school.name,
             location: school.location,
@@ -348,13 +348,26 @@ router.post('/admin/register_school_admin', koaBody, async ctx => {
 
 //saved school admin details
 async function saveSchoolAdminDetails(admin) {
-    //TODO validate passwords match and other validations
-    return await new SchoolAdmin({
-        upi: admin.upi,
-        username: admin.username,
-        password: admin.password,
-        date: new Date()
-    }).save()
+    //fetch the id of the school matching the upi
+    const school = School.findOne({upi: admin.upi}).select('_id').exec()
+    await school.then(async function (id) {
+        if (id !== null)
+            admin.school_id = id
+        //TODO validate passwords match and other validations
+        const query = new SchoolAdmin({
+            school_id: admin.school_id,
+            username: admin.username,
+            password: admin.password,
+            date: new Date()
+        })
+        try {
+            await query.save()
+            return 'saved'
+        }
+        catch (err) {
+            return err
+        }
+    })
 }
 
 //load the admin dashboard
@@ -420,11 +433,11 @@ async function storeSchoolDetails(school_info) {
     let upi = randomString(2, 'BCDFGHJKLMNPQRSUVWXZ')
     //check if the upi exists in the db. If yes, request a new one, if not assign it to this school
     const available = await School.findOne({
-        _id: upi
-    }).select('_id').exec()
+        upi: upi
+    }).select('upi').exec()
     if (available === null) {
         const school = new School({
-            _id: upi,
+            upi: upi,
             name: school_info.name,
             category: school_info.category,
         })
@@ -462,28 +475,28 @@ router.get('/admin/school_admins', async ctx => {
 
 //get individual school details
 router.get('/admin/schools/:id', async ctx => {
-    await School.findOne({_id: ctx.params.id}).exec().then(function (school) {
+    await School.findOne({upi: ctx.params.id}).exec().then(function (school) {
         ctx.render('school_info', {school: school})
     })
 
 })
 //get individual student details
 router.get('/admin/students/:id', async ctx => {
-    await Student.findOne({_id: ctx.params.id}).exec().then(function (student) {
+    await Student.findOne({upi: ctx.params.id}).exec().then(function (student) {
         ctx.render('student_info', {student: student})
     })
 })
 
 //get individual teacher details
 router.get('/admin/teachers/:id', async ctx => {
-    await Teacher.findOne({_id: ctx.params.id}).exec().then(function (teacher) {
+    await Teacher.findOne({upi: ctx.params.id}).exec().then(function (teacher) {
         ctx.render('teacher_info', {teacher: teacher})
     })
 })
 
 //display teacher registration form
 router.get('/update_teacher_info/:id', async ctx => {
-    await Teacher.findOne({_id: ctx.params.id}).exec().then(function (teacher) {
+    await Teacher.findOne({upi: ctx.params.id}).exec().then(function (teacher) {
         ctx.render('update_teacher_info', {teacher: teacher})
     })
 })
@@ -493,7 +506,7 @@ router.post('/update_teacher_info', koaBody, async ctx => {
     const teacher_info = ctx.request.body
 
     await updateTeacherDetails(teacher_info).then(async function (teacher) {
-        ctx.redirect(`/admin/teachers/${teacher._id}`)
+        ctx.redirect(`/admin/teachers/${teacher.upi}`)
     })
 })
 
@@ -501,9 +514,9 @@ router.post('/update_teacher_info', koaBody, async ctx => {
 async function updateTeacherDetails(teacher) {
     console.log(teacher)
     return await Teacher.findOneAndUpdate({
-            _id: teacher.id
+            upi: teacher.id
         }, {
-            _id: teacher.tsc,
+            upi: teacher.tsc,
             surname: teacher.surname,
             first_name: teacher.first_name,
             second_name: teacher.second_name,
@@ -533,7 +546,7 @@ async function updateTeacherDetails(teacher) {
 
 //update student info
 router.get('/update_student_info/:id', async ctx => {
-    await Student.findOne({_id: ctx.params.id}).exec().then(function (student) {
+    await Student.findOne({upi: ctx.params.id}).exec().then(function (student) {
         ctx.render('update_student_info', {student: student})
     })
 })
@@ -541,7 +554,7 @@ router.get('/update_student_info/:id', async ctx => {
 router.post('/update_student_info', koaBody, async ctx => {
     const student_info = ctx.request.body
     await updateStudentDetails(student_info).then(async function (student) {
-        ctx.redirect(`/admin/students/${student._id}`)
+        ctx.redirect(`/admin/students/${student.upi}`)
     })
 })
 
@@ -549,7 +562,7 @@ router.post('/update_student_info', koaBody, async ctx => {
 async function updateStudentDetails(student) {
     console.log(student)
     return await Student.findOneAndUpdate({
-            _id: student.upi
+            upi: student.upi
         }, {
             surname: student.surname,
             first_name: student.first_name,
@@ -563,6 +576,36 @@ async function updateStudentDetails(student) {
             }
         }
     ).exec()
+}
+
+//display school admin login page
+router.get('/schools/:upi', async ctx => {
+    //check if the school exists
+    await School.findOne({
+        upi: ctx.params.upi
+    }).exec().then(function (results) {
+        if (results === null) {
+            ctx.body = `Sorry, ${ctx.params.upi} does not match any records . Please try again`
+        }
+        else {
+            ctx.render('school_admin_login', {school: results})
+        }
+    })
+})
+
+//handle school admin login credentials
+router.post('/school_admin_login', koaBody, async ctx => {
+    await handleSchoolAdminLogin(ctx.request.body).then(function (admin_details) {
+        console.log(admin_details)
+        ctx.body = admin_details
+    })
+})
+
+async function handleSchoolAdminLogin(admin) {
+    return SchoolAdmin.findOne({
+        username: admin.username,
+        password: admin.password
+    }).select('username').exec()
 }
 
 //use middleware
