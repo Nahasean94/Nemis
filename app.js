@@ -175,9 +175,7 @@ async function storeStudentDetails(student) {
         second_name: student.second_name,
         birthdate: student.dob,
         gender: student.gender,
-        transfers: {
-            current_school: student.school_id
-        }
+        'transfers.current_school': student.school_id
     })
     try {
         await studnt_.save()
@@ -203,18 +201,18 @@ router.post('/register_teacher', koaBody, async ctx => {
     const teacher_info = ctx.request.body
 
     await storeTeacherDetails(teacher_info).then(function (saved) {
-    if (saved === "saved") {
-        ctx.body = "A new teacher has been saved"
-    }
-    else {
-        ctx.body = "Error saving teacher admin. Please try again. The error is " + saved
-    }
+        if (saved === "saved") {
+            ctx.body = "A new teacher has been saved"
+        }
+        else {
+            ctx.body = "Error saving teacher admin. Please try again. The error is " + saved
+        }
     })
 })
 
 //store teacher details
 async function storeTeacherDetails(teacher_info) {
-   return await School.findOne({
+    return await School.findOne({
         upi: teacher_info.school_upi
     }).select('_id').exec().then(async function (school) {
         if (school === null) {
@@ -228,9 +226,7 @@ async function storeTeacherDetails(teacher_info) {
                 second_name: teacher_info.second_name,
                 birthdate: teacher_info.dob,
                 gender: teacher_info.gender,
-                posting_history: {
-                    current_school:school
-                }
+                'posting_history.current_school': school
             })
             try {
                 await teacher.save()
@@ -267,35 +263,20 @@ async function updateSchoolDetails(school) {
             name: school.name,
             location: school.location,
             category: school.category,
-            infrastructure: {
-                classes: school.classes,
-                playing_fields: school.playing_fields,
-                halls: school.halls,
-                dormitories: school.dormitories
-            }
-            ,
-            assets: {
-                buses: school.buses,
-                // livestock: school.livestock,
-                farming_land: school.farming_land
-            }
-            ,
-            equipment: {
-                labs: school.labs
-            }
-            ,
-            learning_materials: {
-                science_labs: school.science_labs,
-                book_ratio: school.ratio
-            }
-            ,
-            contact: {
-                email: school.email,
-                phone1: school.phone1,
-                phone2: school.phone2,
-                address: school.address
-
-            }
+            'infrastructure.classes': school.classes,
+            'infrastructure.playing_fields': school.playing_fields,
+            'infrastructure.halls': school.halls,
+            'infrastructure.dormitories': school.dormitories,
+            'assets.buses': school.buses,
+            // livestock: school.livestock,
+            'assets.farming_land': school.farming_land,
+            'equipment.labs': school.labs,
+            'learning_materials.science_labs': school.science_labs,
+            'learning_materials.book_ratio': school.ratio,
+            'contact.email': school.email,
+            'contact.phone1': school.phone1,
+            'contact.phone2': school.phone2,
+            'contact.address': school.address
         }
     ).exec()
 }
@@ -320,10 +301,8 @@ router.post('/moe_policy', koaBody, async ctx => {
 //store teacher details
 async function storePolicies(policy_info) {
     const ministry = new Ministry({
-        policy: {
-            title: policy_info.title,
-            description: policy_info.description
-        }
+        'policy.title': policy_info.title,
+        'policy.description': policy_info.description
     })
     try {
         await ministry.save()
@@ -509,15 +488,15 @@ router.get('/admin/students/:id', async ctx => {
 })
 
 //get individual teacher details
-router.get('/admin/teachers/:id', async ctx => {
-    await Teacher.findOne({upi: ctx.params.id}).exec().then(function (teacher) {
+router.get('/teachers/:id', async ctx => {
+    await Teacher.findOne({_id: ctx.params.id}).exec().then(function (teacher) {
         ctx.render('teacher_info', {teacher: teacher})
     })
 })
 
 //display teacher registration form
 router.get('/update_teacher_info/:id', async ctx => {
-    await Teacher.findOne({upi: ctx.params.id}).exec().then(function (teacher) {
+    await Teacher.findOne({_id: ctx.params.id}).exec().then(function (teacher) {
         ctx.render('update_teacher_info', {teacher: teacher})
     })
 })
@@ -527,7 +506,7 @@ router.post('/update_teacher_info', koaBody, async ctx => {
     const teacher_info = ctx.request.body
 
     await updateTeacherDetails(teacher_info).then(async function (teacher) {
-        ctx.redirect(`/admin/teachers/${teacher.upi}`)
+        ctx.redirect(`/teachers/${teacher._id}`)
     })
 })
 
@@ -535,32 +514,22 @@ router.post('/update_teacher_info', koaBody, async ctx => {
 async function updateTeacherDetails(teacher) {
     console.log(teacher)
     return await Teacher.findOneAndUpdate({
-            upi: teacher.id
+            _id: teacher.id
         }, {
-            upi: teacher.tsc,
+            tsc: teacher.tsc,
             surname: teacher.surname,
             first_name: teacher.first_name,
             second_name: teacher.second_name,
             birthdate: teacher.dob,
             gender: teacher.gender,
-            contact: {
-                email: teacher.email,
-                phone1: teacher.phone1,
-                phone2: teacher.phone2,
-                address: teacher.address
-
-            },
-            posting_history: {
-                reporting_date: teacher.date_posted
-            },
-            teaching_subjects: teacher.subjects
-            ,
-            responsibilities: {
-                name: teacher.responsibility,
-                date_assigned: teacher.date_assigned
-
-            }
-
+            'contact.email': teacher.email,
+            'contact.phone1': teacher.phone1,
+            'contact.phone2': teacher.phone2,
+            'contact.address': teacher.address,
+            'posting_history.reporting_date': teacher.date_posted,
+            teaching_subjects: teacher.subjects,
+            'responsibilities.name': teacher.responsibility,
+            'responsibilities.date_assigned': teacher.date_assigned
         }
     ).exec()
 }
@@ -590,11 +559,9 @@ async function updateStudentDetails(student) {
             second_name: student.second_name,
             birthdate: student.dob,
             gender: student.gender,
-            transfers: {
-                //TODO valid that school must be present
-                // current_school: ,
-                reporting_date: student.reporting_date
-            }
+            //TODO valid that school must be present
+            // current_school: ,
+            'transfers.reporting_date': student.reporting_date
         }
     ).exec()
 }
@@ -663,6 +630,7 @@ async function fetchSchoolTeachers(school_id) {
         "posting_history.current_school": school_id
     }).select('tsc surname firstname').exec()
 }
+
 
 //use middleware
 app.use(cors())

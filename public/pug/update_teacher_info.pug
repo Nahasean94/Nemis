@@ -7,7 +7,7 @@ html
         form(action="/update_teacher_info" method="post")
             input(type="hidden" name="id" id="id" value=teacher._id)
             label(for="tsc") TSC ID
-            input(type="text" name="tsc" id="tsc" value=teacher._id required="true")
+            input(type="text" name="tsc" id="tsc" value=teacher.tsc required="true")
             br
             label(for="surname") Surname
             input(type="text" name="surname" id="surname" value=teacher.surname required="true")
