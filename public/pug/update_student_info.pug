@@ -5,7 +5,7 @@ html
     body
         //TODO add posting history and teaching subjects in the form
         form(action="/update_student_info" method="post")
-            input(type="hidden" name="upi" id="upi" value=student._id)
+            input(type="hidden" name="id" id="id" value=student._id)
             label(for="surname") Surname
             input(type="text" name="surname" id="surname" value=student.surname required="true")
             br

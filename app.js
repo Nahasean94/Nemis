@@ -481,8 +481,8 @@ router.get('/admin/schools/:id', async ctx => {
 
 })
 //get individual student details
-router.get('/admin/students/:id', async ctx => {
-    await Student.findOne({upi: ctx.params.id}).exec().then(function (student) {
+router.get('/students/:id', async ctx => {
+    await Student.findOne({_id: ctx.params.id}).exec().then(function (student) {
         ctx.render('student_info', {student: student})
     })
 })
@@ -536,7 +536,7 @@ async function updateTeacherDetails(teacher) {
 
 //update student info
 router.get('/update_student_info/:id', async ctx => {
-    await Student.findOne({upi: ctx.params.id}).exec().then(function (student) {
+    await Student.findOne({_id: ctx.params.id}).exec().then(function (student) {
         ctx.render('update_student_info', {student: student})
     })
 })
@@ -544,7 +544,7 @@ router.get('/update_student_info/:id', async ctx => {
 router.post('/update_student_info', koaBody, async ctx => {
     const student_info = ctx.request.body
     await updateStudentDetails(student_info).then(async function (student) {
-        ctx.redirect(`/admin/students/${student.upi}`)
+        ctx.redirect(`/students/${student.id}`)
     })
 })
 
@@ -552,7 +552,7 @@ router.post('/update_student_info', koaBody, async ctx => {
 async function updateStudentDetails(student) {
     console.log(student)
     return await Student.findOneAndUpdate({
-            upi: student.upi
+            _id: student.id
         }, {
             surname: student.surname,
             first_name: student.first_name,
