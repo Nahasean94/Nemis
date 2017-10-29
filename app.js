@@ -93,13 +93,9 @@ router.get('/register_student', async ctx => {
 //register new student details in the database
 router.post('/register_student', koaBody, async ctx => {
     const student_info = ctx.request.body
-    const saved = await storeStudentDetails(student_info)
-    if (saved === "saved") {
-        ctx.body = "A new student has been saved"
-    }
-    else {
-        ctx.body = saved
-    }
+    await storeStudentDetails(student_info).then(async function (student) {
+        ctx.redirect(`/schools/students/${student.transfers.current_school._id}`)
+    })
 })
 //display the admin page
 router.get('/admin', async ctx => {
@@ -178,8 +174,7 @@ async function storeStudentDetails(student) {
         'transfers.current_school': student.school_id
     })
     try {
-        await studnt_.save()
-        return "saved"
+        return await studnt_.save()
     } catch (err) {
         //TODO handle this section of what happens when we have duplicate UPIs
         if ((err.message).split(' ')[0] === 'E11000') {
@@ -201,12 +196,7 @@ router.post('/register_teacher', koaBody, async ctx => {
     const teacher_info = ctx.request.body
 
     await storeTeacherDetails(teacher_info).then(function (saved) {
-        if (saved === "saved") {
-            ctx.body = "A new teacher has been saved"
-        }
-        else {
-            ctx.body = "Error saving teacher admin. Please try again. The error is " + saved
-        }
+        ctx.redirect(`/schools/teachers/${saved.posting_history.current_school._id}`)
     })
 })
 
@@ -229,8 +219,7 @@ async function storeTeacherDetails(teacher_info) {
                 'posting_history.current_school': school
             })
             try {
-                await teacher.save()
-                return "saved"
+                return await teacher.save()
             } catch (err) {
                 return err
             }
@@ -244,7 +233,7 @@ router.get('/update_school_info/:upi', async ctx => {
         ctx.render('update_school_info', {school: school})
     })
 })
-router.get('/schools/update_school_info/:id',async ctx=>{
+router.get('/schools/update_school_info/:id', async ctx => {
     await School.findOne({_id: ctx.params.id}).exec().then(function (school) {
         ctx.render('update_school_info', {school: school})
     })
@@ -580,7 +569,7 @@ router.get('/schools/:upi', async ctx => {
         if (results === null) {
             ctx.body = `Sorry, ${ctx.params.upi} does not match any records . Please try again`
         }
-        else {
+        else{
             ctx.render('school_admin_login', {school: results})
         }
     })
@@ -594,6 +583,7 @@ router.post('/school_admin_login', koaBody, async ctx => {
             ctx.body = 'invalid credntails. Please try again'
         }
         else {
+            ctx.session.school_id=admin_details.school_id
             ctx.render('school_admin_dashboard', {school_id: admin_details.school_id})
         }
     })
@@ -636,6 +626,30 @@ async function fetchSchoolTeachers(school_id) {
     }).select('tsc surname firstname').exec()
 }
 
+//mark the teacher as retired
+router.get('/update_teacher_info/retired/:id', async ctx => {
+    ctx.render('retired', {teacher: ctx.params.id})
+})
+//handle retired information from the form
+router.post('/update_teacher_info/retired', koaBody, async ctx => {
+ await markTeacherRetired(ctx.request.body).then(function (retired) {
+     console.log(retired)
+     ctx.redirect(`/schools/teachers/${ctx.session.school_id}`)
+ })
+})
+
+//update the db for retired teacher
+async function markTeacherRetired(teacher) {
+   return await Teacher.findOneAndUpdate({_id: teacher.teacher_id}, {
+        life: teacher.retired
+    }).exec().then(async function (retired_teacher) {
+
+        await new Retired({
+            teacher_id: retired_teacher._id,
+            date: teacher.date
+        }).save()
+    })
+}
 
 //use middleware
 app.use(cors())

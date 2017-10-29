@@ -1,0 +1,15 @@
+doctype
+html
+    head
+        title Retired
+    body
+        form(action="/update_teacher_info/retired" method="post")
+            input(type="hidden" name="teacher_id" value=teacher)
+            br
+            label(for="retired") Mark teacher as retired
+            input(type="checkbox" required="true" id="retired" name="retired" value="retired")
+            br
+            label(for="date") Date
+            input(type="date" required="true" id="date" name="date" value="date")
+            br
+            input(type="submit" value="Submit")

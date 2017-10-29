@@ -7,7 +7,7 @@ const mongoose = require('mongoose')
 const Schema = mongoose.Schema
 
 const StudentSchema = new Schema({
-   upi: {
+    upi: {
         type: String,
         unique: true,
         required: [true, 'UPI is a required field']
@@ -38,8 +38,9 @@ const StudentSchema = new Schema({
         path: String,
     }],
     transfers: {
-        current_school: {type: Schema.Types.ObjectId, ref: 'School',
-        required:[true,'School UPI is required']
+        current_school: {
+            type: Schema.Types.ObjectId, ref: 'School',
+            required: [true, 'School UPI is required']
         },
         reporting_date: {
             type: Date
@@ -56,7 +57,7 @@ const StudentSchema = new Schema({
     }
 })
 const TeacherSchema = new Schema({
-   tsc: {
+    tsc: {
         type: String,
         unique: true,
         required: [true, 'TSC number is required']
@@ -117,6 +118,11 @@ const TeacherSchema = new Schema({
         date_relieved: {
             type: Date
         }
+    },
+    life: {
+        type: String,
+        enum: ['working', 'retired', 'dead'],
+        default: 'working'
     }
 })
 const SchoolSchema = new Schema({
@@ -206,7 +212,7 @@ const MinistrySchema = new Schema({
     }]
 })
 const DeceasedSchema = new Schema({
-   upi: {
+    upi: {
         type: String,
         unique: true,
         required: [true, 'UPI is required']
@@ -220,22 +226,22 @@ const DeceasedSchema = new Schema({
     death_certificate: String
 })
 const RetiredSchema = new Schema({
-   upi: {
-        type: String,
+    teacher_id: {
+        type: Schema.Types.ObjectId,
+        ref: 'Teacher',
         unique: true,
-        required: [true, 'TSC number is required']
+        required: [true, 'Teacher id is required']
     },
     date: {
         type: Date,
         default: new Date()
-    },
-    school_id: {type: Schema.Types.ObjectId, ref: 'School'}
+    }
 })
 const SchoolAdminSchema = new Schema({
     school_id: {
         type: Schema.Types.ObjectId,
         ref: 'School',
-        required:[true,'UPI is required']
+        required: [true, 'UPI is required']
     },
     date:
         {

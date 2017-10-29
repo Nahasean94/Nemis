@@ -28,27 +28,33 @@ html
             input(type="radio" name="gender" id="female" value="female")
             br
             label(for="email") Email
-            input(type="email" name="email" id="email" value="email")
+            input(type="email" name="email" id="email" value=teacher.contact.email)
             br
             label(for="phone1") Phone number 1
-            input(type="number" name="phone1" id="phone1" value="phone1")
+            input(type="number" name="phone1" id="phone1" value=teacher.contact.phone1)
             br
             label(for="phone2") Phone number 2
-            input(type="number" name="phone2" id="phone2" value="phone2")
+            input(type="number" name="phone2" id="phone2" value=teacher.contact.phone2)
             br
             label(for="address") address
-            input(type="text" name="address" id="address" value="address" placeholder="e.g P.O Box 320 Nairobi")
+            input(type="text" name="address" id="address" value=teacher.contact.address placeholder="e.g P.O Box 320 Nairobi")
             br
             label(for="subjects") Teaching subjects
-            input(type="text" name="subjects" id="subjects" value="subjects" placeholder="e.g English, Biology, Geography")
+            input(type="text" name="subjects" id="subjects" value=teacher.teaching_subjects placeholder="e.g English, Biology, Geography")
             br
             label(for="responsibility") Current Responsibility
-            input(type="text" name="responsibility" id="responsibility" )
+            input(type="text" name="responsibility" id="responsibility" value=teacher.responsibilities.name)
             br
             label(for="date_assigned") Date assigned the responsibility
-            input(type="date" name="date_assigned" id="date_assigned" value="date_assigned")
+            input(type="date" name="date_assigned" id="date_assigned")
             br
             label(for="date_posted") Date posted at current school
             input(type="date" name="date_posted" id="date_posted" value="date_posted")
-
             input(type="submit" name="submit" value="Submit")
+        br
+        a(href="/update_teacher_info/retired/"+teacher._id) mark the teacher as retired
+        br
+        a(href="/update_teacher_info/posting_history/"+teacher._id) clear the teacher from the school
+        br
+        a(href="/update_teacher_info/dead/"+teacher._id) mark the teacher as dead
+
