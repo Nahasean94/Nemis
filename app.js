@@ -569,7 +569,7 @@ router.get('/schools/:upi', async ctx => {
         if (results === null) {
             ctx.body = `Sorry, ${ctx.params.upi} does not match any records . Please try again`
         }
-        else{
+        else {
             ctx.render('school_admin_login', {school: results})
         }
     })
@@ -583,7 +583,7 @@ router.post('/school_admin_login', koaBody, async ctx => {
             ctx.body = 'invalid credntails. Please try again'
         }
         else {
-            ctx.session.school_id=admin_details.school_id
+            ctx.session.school_id = admin_details.school_id
             ctx.render('school_admin_dashboard', {school_id: admin_details.school_id})
         }
     })
@@ -632,15 +632,15 @@ router.get('/update_teacher_info/retired/:id', async ctx => {
 })
 //handle retired information from the form
 router.post('/update_teacher_info/retired', koaBody, async ctx => {
- await markTeacherRetired(ctx.request.body).then(function (retired) {
-     console.log(retired)
-     ctx.redirect(`/schools/teachers/${ctx.session.school_id}`)
- })
+    await markTeacherRetired(ctx.request.body).then(function (retired) {
+        console.log(retired)
+        ctx.redirect(`/schools/teachers/${ctx.session.school_id}`)
+    })
 })
 
 //update the db for retired teacher
 async function markTeacherRetired(teacher) {
-   return await Teacher.findOneAndUpdate({_id: teacher.teacher_id}, {
+    return await Teacher.findOneAndUpdate({_id: teacher.teacher_id}, {
         life: teacher.retired
     }).exec().then(async function (retired_teacher) {
 
@@ -648,6 +648,42 @@ async function markTeacherRetired(teacher) {
             teacher_id: retired_teacher._id,
             date: teacher.date
         }).save()
+    })
+}
+
+//show clearance form
+router.get('/update_teacher_info/posting_history/:id', async ctx => {
+    ctx.render('posting_history', {id: ctx.params.id})
+})
+//clear a teacher
+router.post('/update_teacher_info/posting_history', koaBody, async ctx => {
+    await  clearTeacher(ctx, ctx.request.body).then(function (cleared) {
+        ctx.body = "teacher cleared"
+    })
+})
+
+//update the database about clearance of teacher
+async function clearTeacher(ctx, teacher) {
+    return await Teacher.findOne({_id: teacher.teacher_id}).select('posting_history').exec().then(async function (teacher_) {
+        await Teacher.findByIdAndUpdate({_id: teacher.teacher_id}, {
+            posting_history: {
+                current_school: null,
+                reporting_date: null
+            }
+        }).exec().then(async function (cleared_teacher) {
+            await Teacher.findByIdAndUpdate({_id:cleared_teacher._id},{
+                $push: {
+                    'posting_history.previous_school': {
+                        school_id: teacher_.posting_history.current_school,
+                        reporting_date: teacher_.posting_history.reporting_date,
+                        clearance_date: teacher.date
+                    }
+                }
+            }).exec().then(function (cle) {
+                console.log(cle)
+            })
+
+        })
     })
 }
 

@@ -1,0 +1,15 @@
+doctype
+html
+    head
+        title Clear the teacher
+    body
+        form(action="/update_teacher_info/posting_history" method="post")
+            input(type="hidden" value=id name="teacher_id")
+            br
+            label(for="clearance") Clear the teacher from the school
+            input(type="checkbox" name="clearance" id="clearance" required="true")
+            br
+            label(for="date") Date
+            input(type="date" name="date" id="date" required="true")
+            br
+            input(type="submit" value="Submit" )
