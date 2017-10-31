@@ -1,0 +1,14 @@
+doctype
+html
+    head
+        title Dead?
+    body
+        form(action="/update_teacher_info/dead" method="post")
+            input(type="hidden" value=id name="teacher_id")
+            label(for="dead") Mark teacher as dead
+            input(type="checkbox" name="dead" id="dead" required="true")
+            label(for="cause") Cause of death
+            input(type="text" name="cause" id="cause" required="true")
+            label(for="date") Date of death
+            input(type="date" name="date" id="date" required="true")
+            input(type="submit" value="Submit" )

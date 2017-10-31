@@ -212,7 +212,7 @@ const MinistrySchema = new Schema({
     }]
 })
 const DeceasedSchema = new Schema({
-    upi: {
+    teacher_id: {
         type: String,
         unique: true,
         required: [true, 'UPI is required']

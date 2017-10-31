@@ -671,7 +671,7 @@ async function clearTeacher(ctx, teacher) {
                 reporting_date: null
             }
         }).exec().then(async function (cleared_teacher) {
-            await Teacher.findByIdAndUpdate({_id:cleared_teacher._id},{
+            await Teacher.findByIdAndUpdate({_id: cleared_teacher._id}, {
                 $push: {
                     'posting_history.previous_school': {
                         school_id: teacher_.posting_history.current_school,
@@ -679,11 +679,32 @@ async function clearTeacher(ctx, teacher) {
                         clearance_date: teacher.date
                     }
                 }
-            }).exec().then(function (cle) {
-                console.log(cle)
-            })
-
+            }).exec()
         })
+    })
+}
+
+//display form to mark teacher as dead
+router.get('/update_teacher_info/dead/:id', async ctx => {
+    ctx.render('dead', {id: ctx.params.id})
+})
+//process form to mark teacher as dead
+router.post('/update_teacher_info/dead/', koaBody, async ctx => {
+    await markTeacherDead(ctx.request.body).then(function (dead) {
+        ctx.body = "marked as dead"
+    })
+})
+
+//mark teacher as dead in the database
+async function markTeacherDead(teacher) {
+    return await Teacher.findByIdAndUpdate({_id: teacher.teacher_id}, {
+        life: 'dead'
+    }).exec().then(async function (teacher_) {
+        await new Deceased({
+            teacher_id: teacher.teacher_id,
+            date_of_death: teacher.date,
+            cause_of_death: teacher.cause
+        }).save()
     })
 }
 
