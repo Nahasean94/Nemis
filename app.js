@@ -708,6 +708,39 @@ async function markTeacherDead(teacher) {
     })
 }
 
+//show student clearance form
+router.get('/update_student_info/clearance/:id', async ctx => {
+    ctx.render('clear_student', {id: ctx.params.id})
+})
+//process student clearance form
+router.post('/update_student_info/clearance', koaBody, async ctx => {
+    await clearStudent(ctx.request.body).then(function (student) {
+        ctx.body = "student cleared from school"
+    })
+})
+
+//update student clearance in the database
+async function clearStudent(student) {
+    return await Student.findOne({_id: student.student_id}).select('transfers').exec().then(async function (student_) {
+        await Student.findByIdAndUpdate({_id: student.student_id}, {
+            transfers: {
+                current_school: null,
+                reporting_date: null
+            }
+        }).exec().then(async function (transferred_student) {
+            await Student.findByIdAndUpdate({_id: student.student_id}, {
+                $push: {
+                    'transfers.previous_school': {
+                        school_id: student_.transfers.current_school,
+                        reporting_date: student_.transfers.reporting_date,
+                        clearance_date: student.date
+                    }
+                }
+            }).exec()
+        })
+    })
+}
+
 //use middleware
 app.use(cors())
 // app.use(serve({rootDir: './public', path: 'public'}))
