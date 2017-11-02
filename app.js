@@ -85,18 +85,6 @@ router.get('/school_info', async ctx => {
     ctx.render('school_info')
 
 })
-//display register new student form
-router.get('/register_student', async ctx => {
-    ctx.render('register_student')
-
-})
-//register new student details in the database
-router.post('/register_student', koaBody, async ctx => {
-    const student_info = ctx.request.body
-    await storeStudentDetails(student_info).then(async function (student) {
-        ctx.redirect(`/schools/students/${student.transfers.current_school._id}`)
-    })
-})
 //display the admin page
 router.get('/admin', async ctx => {
     if (ctx.path === '/favicon.ico') return
@@ -146,6 +134,28 @@ router.get('/logout', async ctx => {
     ctx.session = null
     ctx.redirect('/')
 })
+//display register new student form
+router.get('/register_student', async ctx => {
+    ctx.render('register_student')
+
+})
+//register new student details in the database
+router.post('/register_student', koaBody, async ctx => {
+    const student_info = ctx.request.body
+    await checkIfNull({
+        surname: student_info.surname,
+        first_name: student_info.first_name,
+        birthdate: student_info.dob,
+        gender: student_info.gender
+    }).then(async function (required) {
+        await storeStudentDetails(student_info).then(async function (student) {
+            ctx.redirect(`/schools/students/${student.transfers.current_school._id}`)
+        })
+
+    }).catch(function (required) {
+        ctx.body = `The following fields are required: ${required}`
+    })
+})
 
 //store student details
 async function storeStudentDetails(student) {
@@ -164,7 +174,8 @@ async function storeStudentDetails(student) {
     }).select('_id').exec().then(function (school_id) {
         student.school_id = school_id
     })
-    const studnt_ = new Student({
+    return new Student({
+        //TODO use $ne and other conditionals to make sure no two upis are the same.
         upi: upi,
         surname: student.surname,
         first_name: student.first_name,
@@ -172,19 +183,12 @@ async function storeStudentDetails(student) {
         birthdate: student.dob,
         gender: student.gender,
         'transfers.current_school': student.school_id
-    })
-    try {
-        return await studnt_.save()
-    } catch (err) {
-        //TODO handle this section of what happens when we have duplicate UPIs
+    }).save().catch(err => {
         if ((err.message).split(' ')[0] === 'E11000') {
-            // storeStudentDetails(student)
+            storeStudentDetails(student)
         }
-        return err
-    }
-    // } else {
-    //     storeStudentDetails(student)
-    // }
+        console.log(err)
+    })
 }
 
 //display teachers registration form
@@ -243,14 +247,12 @@ router.post('/update_school_info', koaBody, async ctx => {
     const school_info = ctx.request.body
 
     await updateSchoolDetails(school_info).then(async function (school) {
-        console.log(school)
         ctx.redirect(`/admin/schools/${school.upi}`)
     })
 })
 
 //update school details
 async function updateSchoolDetails(school) {
-    console.log(school)
     return await School.findOneAndUpdate({
             _id: school.id
         }, {
@@ -335,8 +337,18 @@ router.get('/admin/register_school_admin', ctx => {
 })
 //receive form details to register new school admin
 router.post('/admin/register_school_admin', koaBody, async ctx => {
-    await saveSchoolAdminDetails(ctx.request.body).then(function (admin) {
-        ctx.redirect('/admin/school_admins')
+    const admin = ctx.request.body
+    checkIfNull({
+        password: admin.password,
+        confirm_password: admin.cpass,
+        email: admin.email,
+        username: admin.username.length
+    }).then(async function (message) {
+        await saveSchoolAdminDetails(admin).then(function (admin) {
+            ctx.redirect('/admin/school_admins')
+        })
+    }).catch(function (err) {
+        ctx.body = `The following fields are required: ${err}`
     })
 })
 
@@ -371,9 +383,6 @@ function loadSystemAdminDashboard(ctx) {
 
 //register admin
 async function registerAdmin(ctx, admin) {
-    if (admin.password.length < 1 || admin.cpass.length < 1 || admin.email.length < 1 || admin.username.length < 1) {
-        return "fill_all"
-    }
     if (admin.password !== admin.cpass) {
         return 'password_missmatch'
     }
@@ -506,7 +515,6 @@ router.post('/update_teacher_info', koaBody, async ctx => {
 
 //update school details
 async function updateTeacherDetails(teacher) {
-    console.log(teacher)
     return await Teacher.findOneAndUpdate({
             _id: teacher.id
         }, {
@@ -544,7 +552,6 @@ router.post('/update_student_info', koaBody, async ctx => {
 
 //update school details
 async function updateStudentDetails(student) {
-    console.log(student)
     return await Student.findOneAndUpdate({
             _id: student.id
         }, {
@@ -578,7 +585,6 @@ router.get('/schools/:upi', async ctx => {
 //handle school admin login credentials
 router.post('/school_admin_login', koaBody, async ctx => {
     await handleSchoolAdminLogin(ctx.request.body).then(function (admin_details) {
-        console.log(admin_details)
         if (admin_details === null) {
             ctx.body = 'invalid credntails. Please try again'
         }
@@ -633,7 +639,6 @@ router.get('/update_teacher_info/retired/:id', async ctx => {
 //handle retired information from the form
 router.post('/update_teacher_info/retired', koaBody, async ctx => {
     await markTeacherRetired(ctx.request.body).then(function (retired) {
-        console.log(retired)
         ctx.redirect(`/schools/teachers/${ctx.session.school_id}`)
     })
 })
@@ -740,6 +745,73 @@ async function clearStudent(student) {
         })
     })
 }
+
+//check not null
+function checkIfNull(object) {
+    return new Promise((res, rej) => {
+        const required = []
+        new Promise((res_, rej_) => {
+            if (typeof object === 'object') {
+                let counter = 0
+                for (let item in object) {
+                    if (object.hasOwnProperty(item)) {
+                        if (object[item].length < 1) {
+                            required.push(item)
+                        }
+                        counter++
+                        if (counter === Object.keys(object).length)
+                            res_(required)
+                    }
+                }
+            } else {
+                if (item.length < 1) {
+                    required.push(item)
+                    rej_(required)
+                }
+            }
+        }).then(required => {
+            if (required.length > 0)
+                rej(required)
+            else
+                res('all is ok')
+        })
+
+    })
+}
+
+//check not undefined
+async function checkIfUndefined(object) {
+    return new Promise((res, rej) => {
+        const required = []
+        new Promise((res_, rej_) => {
+            if (typeof object === 'object') {
+                let counter = 0
+                for (let item in object) {
+                    if (object.hasOwnProperty(item)) {
+                        if (object[item].length === undefined) {
+                            required.push(item)
+                        }
+                        counter++
+                        if (counter === Object.keys(object).length)
+                            res_(required)
+                    }
+                }
+            } else {
+                if (item.length === undefined) {
+                    required.push(item)
+                    rej_(required)
+                }
+            }
+        }).then(required => {
+            if (required.length > 0)
+                rej(required)
+            else
+                res('all is ok')
+        })
+
+    })
+}
+
 
 //use middleware
 app.use(cors())
