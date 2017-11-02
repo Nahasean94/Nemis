@@ -7,14 +7,17 @@ html
         br
         a(href="/register_teacher") Register Teacher
         br
-        a(href="/update_student_info/"+student._id) Edit student information
+        a(href="/update_student_info/" + student._id) Edit student information
         br
         ul
             li UPI: #{student.upi}
             li Surname: #{student.surname}
             li First name: #{student.first_name}
+            -if(student.second_name){
             li Second name: #{student.second_name}
+            -}
             li Date of birth: #{student.birthdate.toDateString()}
             li Gender: #{student.gender}
-            li Transfers: #{student.transfers}
+            li Current school: #{student.transfers.current_school}
+            li Transfers: #{student.transfers.previous_school}
             li Performance: #{student.performance}

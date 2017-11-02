@@ -486,6 +486,12 @@ router.get('/admin/schools/:id', async ctx => {
 //get individual student details
 router.get('/students/:id', async ctx => {
     await Student.findOne({_id: ctx.params.id}).exec().then(function (student) {
+        if ((student.performance).length < 1) {
+            student.performance[0] = 'No performance records found'
+        }
+        if (student.transfers.previous_school.length < 1) {
+            student.transfers.previous_school[0] = 'No previous school records found'
+        }
         ctx.render('student_info', {student: student})
     })
 })
@@ -545,8 +551,23 @@ router.get('/update_student_info/:id', async ctx => {
 //register new student details in the database
 router.post('/update_student_info', koaBody, async ctx => {
     const student_info = ctx.request.body
+    await checkIfNull({
+        surname: student_info.surname,
+        first_name: student_info.first_name,
+        birthdate: student_info.dob,
+        gender: student_info.gender
+    }).then(async function (required) {
     await updateStudentDetails(student_info).then(async function (student) {
+        if ((student.performance).length < 1) {
+            student.performance[0] = 'No performance records found'
+        }
+        if (student.transfers.previous_school.length < 1) {
+            student.transfers.previous_school[0] = 'No previous school records found'
+        }
         ctx.redirect(`/students/${student.id}`)
+    })
+    }).catch(function (required) {
+        ctx.body = `The following fields are required: ${required}`
     })
 })
 
@@ -607,6 +628,9 @@ async function handleSchoolAdminLogin(admin) {
 //fetch students of a particular school
 router.get('/schools/students/:school_id', async ctx => {
     await fetchSchoolStudents(ctx.params.school_id).then(function (students) {
+        if (students.length < 1) {
+            students = 'The school has no registered students'
+        }
         ctx.render('students', {students: students, school_id: ctx.params.school_id})
     })
 })
@@ -719,8 +743,17 @@ router.get('/update_student_info/clearance/:id', async ctx => {
 })
 //process student clearance form
 router.post('/update_student_info/clearance', koaBody, async ctx => {
-    await clearStudent(ctx.request.body).then(function (student) {
+    const cleared_student=ctx.request.body
+    await checkIfNull({
+        clear: cleared_student.clear,
+        date: cleared_student.date,
+    }).then(async function (required) {
+    await clearStudent(cleared_student).then(function (student) {
         ctx.body = "student cleared from school"
+    })
+
+    }).catch(function (required) {
+        ctx.body = `The following fields are required: ${required}`
     })
 })
 
