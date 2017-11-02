@@ -5,4 +5,6 @@ const obj={
     location:'lcoation'
 }
 // for(let item in obj)
-    console.log(Object.keys(obj).length)
+delete obj.name
+
+    console.log(obj)

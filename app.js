@@ -198,9 +198,19 @@ router.get('/register_teacher', async ctx => {
 //register new student details in the database
 router.post('/register_teacher', koaBody, async ctx => {
     const teacher_info = ctx.request.body
-
-    await storeTeacherDetails(teacher_info).then(function (saved) {
-        ctx.redirect(`/schools/teachers/${saved.posting_history.current_school._id}`)
+    await checkIfNull({
+        tsc: teacher_info.tsc,
+        surname: teacher_info.surname,
+        first_name: teacher_info.first_name,
+        second_name: teacher_info.second_name,
+        birthdate: teacher_info.dob,
+        gender: teacher_info.gender
+    }).then(async function (required) {
+        await storeTeacherDetails(teacher_info).then(function (saved) {
+            ctx.redirect(`/schools/teachers/${saved.posting_history.current_school._id}`)
+        })
+    }).catch(function (required) {
+        ctx.body = `The following are required fields: ${required}`
     })
 })
 
@@ -284,14 +294,21 @@ router.get('/moe_policy', async ctx => {
 //write new policies in the database
 router.post('/moe_policy', koaBody, async ctx => {
     const policy_info = ctx.request.body
+    await checkIfNull({
+        title: policy_info.title,
+        description: policy_info.description
+    }).then(async function (required) {
+        const saved = await storePolicies(policy_info)
+        if (saved === "saved") {
+            ctx.body = "A new policy has been saved"
+        }
+        else {
+            ctx.body = "Error school policy admin. Please try again"
+        }
 
-    const saved = await storePolicies(policy_info)
-    if (saved === "saved") {
-        ctx.body = "A new policy has been saved"
-    }
-    else {
-        ctx.body = "Error school policy admin. Please try again"
-    }
+    }).catch(function (required) {
+        ctx.body = `The following are required fields: ${required}`
+    })
 })
 
 //store teacher details
@@ -557,15 +574,15 @@ router.post('/update_student_info', koaBody, async ctx => {
         birthdate: student_info.dob,
         gender: student_info.gender
     }).then(async function (required) {
-    await updateStudentDetails(student_info).then(async function (student) {
-        if ((student.performance).length < 1) {
-            student.performance[0] = 'No performance records found'
-        }
-        if (student.transfers.previous_school.length < 1) {
-            student.transfers.previous_school[0] = 'No previous school records found'
-        }
-        ctx.redirect(`/students/${student.id}`)
-    })
+        await updateStudentDetails(student_info).then(async function (student) {
+            if ((student.performance).length < 1) {
+                student.performance[0] = 'No performance records found'
+            }
+            if (student.transfers.previous_school.length < 1) {
+                student.transfers.previous_school[0] = 'No previous school records found'
+            }
+            ctx.redirect(`/students/${student.id}`)
+        })
     }).catch(function (required) {
         ctx.body = `The following fields are required: ${required}`
     })
@@ -743,14 +760,14 @@ router.get('/update_student_info/clearance/:id', async ctx => {
 })
 //process student clearance form
 router.post('/update_student_info/clearance', koaBody, async ctx => {
-    const cleared_student=ctx.request.body
+    const cleared_student = ctx.request.body
     await checkIfNull({
         clear: cleared_student.clear,
         date: cleared_student.date,
     }).then(async function (required) {
-    await clearStudent(cleared_student).then(function (student) {
-        ctx.body = "student cleared from school"
-    })
+        await clearStudent(cleared_student).then(function (student) {
+            ctx.body = "student cleared from school"
+        })
 
     }).catch(function (required) {
         ctx.body = `The following fields are required: ${required}`
