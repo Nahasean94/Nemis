@@ -39,6 +39,7 @@ mongoose.connect('mongodb://localhost/nemis', {useMongoClient: true, promiseLibr
 const pug = new Pug({
     viewPath: './public/pug'
 })
+//display the homepage with a form to search a upi
 router.get('/', async ctx => {
     ctx.render('index')
 })
@@ -52,7 +53,7 @@ router.post('/search', koaBody, async ctx => {
 async function searchUPI(upi) {
     return Student.findOne({
         upi: upi
-    }).select('name path').exec()
+    }).select('name performance').exec()
 }
 
 //display school admin login page
@@ -61,12 +62,13 @@ async function searchUPI(upi) {
 //     ctx.render('school_admin')
 // })
 //handle school admin login information
-router.post('/school_admin', koaBody, async ctx => {
+/*router.post('/school_admin', koaBody, async ctx => {
     const info = ctx.request.body
     const username = info.username
     const password = info.password
     await checkLogin(ctx, username, password).then(function (response) {
-        ctx.render('school_info')
+
+        // ctx.render('school_info')
     })
 })
 
@@ -77,7 +79,7 @@ async function checkLogin(ctx, username, password) {
         username: username,
         password: password
     }).exec()
-}
+}*/
 
 //TODO remove this in production
 //school admin activities
@@ -118,7 +120,8 @@ router.post('/admin_login', koaBody, async ctx => {
                 ctx.session.email = person.email
                 ctx.session.role = person.role
                 ctx.session.isNew = false
-                ctx.redirect('/admin')
+                ctx.body=person
+                // ctx.redirect('/admin')
             }
             else {
                 ctx.body = "You are not registered"
@@ -163,12 +166,6 @@ async function storeStudentDetails(student) {
     const mid = randomString(2, 'BCDFGHJKLMNPQRSVWXYZ')
     const postHyphen = randomString(2, '0123456789')
     const upi = `${preHyphen}-${mid}-${postHyphen}`
-    // const upi='WJ-KG-01'
-    //check if any student is registered with the upi, if not register the upi, if yes recurse through the function
-    // const available = await Student.findOne({
-    //     upi: upi
-    // }).select('upi').exec()
-    // if (available === null) {
     await School.findOne({
         upi: student.upi
     }).select('_id').exec().then(function (school_id) {
@@ -187,7 +184,6 @@ async function storeStudentDetails(student) {
         if ((err.message).split(' ')[0] === 'E11000') {
             storeStudentDetails(student)
         }
-        console.log(err)
     })
 }
 
@@ -244,12 +240,14 @@ async function storeTeacherDetails(teacher_info) {
 //display school update_info form
 router.get('/update_school_info/:upi', async ctx => {
     await School.findOne({upi: ctx.params.upi}).exec().then(function (school) {
-        ctx.render('update_school_info', {school: school})
+        ctx.body=school
+        // ctx.render('update_school_info', {school: school})
     })
 })
 router.get('/schools/update_school_info/:id', async ctx => {
     await School.findOne({_id: ctx.params.id}).exec().then(function (school) {
-        ctx.render('update_school_info', {school: school})
+        ctx.body=school
+        // ctx.render('update_school_info', {school: school})
     })
 })
 //update school_info details in the database
@@ -395,7 +393,8 @@ async function saveSchoolAdminDetails(admin) {
 
 //load the admin dashboard
 function loadSystemAdminDashboard(ctx) {
-    ctx.render('system_admin_dashboard', {ctx: ctx})
+    ctx.body=ctx
+    // ctx.render('system_admin_dashboard', {ctx: ctx})
 }
 
 //register admin
@@ -477,26 +476,31 @@ async function storeSchoolDetails(school_info) {
 
 //get students
 router.get('/admin/students', async ctx => {
-    ctx.render('students', {students: await Student.find().select('id surname firstname')})
+    // ctx.render('students', {students: await Student.find().select('id surname first_name')})
+    ctx.body=await Student.find().select('id surname first_name')
 })
 //get teachers
 router.get('/admin/teachers', async ctx => {
-    ctx.render('teachers', {teachers: await Teacher.find().select('id surname firstname')})
+    // ctx.render('teachers', {teachers: await Teacher.find().select('id surname first_name')})
+    ctx.body=await Teacher.find().select('id surname first_name')
 })
 //get schools
 router.get('/admin/schools', async ctx => {
-    ctx.render('schools', {schools: await School.find().select('id name category')})
+    // ctx.render('schools', {schools: await School.find().select('id name category')})
+    ctx.body=await School.find().select('id name category')
 
 })
 //get school admins
 router.get('/admin/school_admins', async ctx => {
     ctx.render('school_admins', {school_admins: await SchoolAdmin.find().select('upi username')})
+    ctx.body=await SchoolAdmin.find().select('upi username')
 })
 
 //get individual school details
 router.get('/admin/schools/:id', async ctx => {
     await School.findOne({upi: ctx.params.id}).exec().then(function (school) {
-        ctx.render('school_info', {school: school})
+        ctx.body=school
+        // ctx.render('school_info', {school: school})
     })
 
 })
@@ -509,21 +513,24 @@ router.get('/students/:id', async ctx => {
         if (student.transfers.previous_school.length < 1) {
             student.transfers.previous_school[0] = 'No previous school records found'
         }
-        ctx.render('student_info', {student: student})
+        ctx.body=student
+        // ctx.render('student_info', {student: student})
     })
 })
 
 //get individual teacher details
 router.get('/teachers/:id', async ctx => {
     await Teacher.findOne({_id: ctx.params.id}).exec().then(function (teacher) {
-        ctx.render('teacher_info', {teacher: teacher})
+        // ctx.render('teacher_info', {teacher: teacher})
+        ctx.body=teacher
     })
 })
 
 //display teacher registration form
 router.get('/update_teacher_info/:id', async ctx => {
     await Teacher.findOne({_id: ctx.params.id}).exec().then(function (teacher) {
-        ctx.render('update_teacher_info', {teacher: teacher})
+        // ctx.render('update_teacher_info', {teacher: teacher})
+        ctx.body=teacher
     })
 })
 
@@ -562,7 +569,8 @@ async function updateTeacherDetails(teacher) {
 //update student info
 router.get('/update_student_info/:id', async ctx => {
     await Student.findOne({_id: ctx.params.id}).exec().then(function (student) {
-        ctx.render('update_student_info', {student: student})
+        // ctx.render('update_student_info', {student: student})
+    ctx.body=student
     })
 })
 //register new student details in the database
@@ -615,7 +623,8 @@ router.get('/schools/:upi', async ctx => {
             ctx.body = `Sorry, ${ctx.params.upi} does not match any records . Please try again`
         }
         else {
-            ctx.render('school_admin_login', {school: results})
+            // ctx.render('school_admin_login', {school: results})
+            ctx.body=results
         }
     })
 })
@@ -628,7 +637,8 @@ router.post('/school_admin_login', koaBody, async ctx => {
         }
         else {
             ctx.session.school_id = admin_details.school_id
-            ctx.render('school_admin_dashboard', {school_id: admin_details.school_id})
+            ctx.body= admin_details.school_id
+            // ctx.render('school_admin_dashboard', {school_id: admin_details.school_id})
         }
     })
 })
@@ -648,7 +658,10 @@ router.get('/schools/students/:school_id', async ctx => {
         if (students.length < 1) {
             students = 'The school has no registered students'
         }
-        ctx.render('students', {students: students, school_id: ctx.params.school_id})
+        // students.school_id=ctx.params.school_id
+
+        ctx.body={students: students, school_id: ctx.params.school_id}
+        // ctx.render('students', {students: students, school_id: ctx.params.school_id})
     })
 })
 
@@ -656,13 +669,14 @@ router.get('/schools/students/:school_id', async ctx => {
 async function fetchSchoolStudents(school_id) {
     return await Student.find({
         'transfers.current_school': school_id
-    }).select('upi surname firstname').exec()
+    }).select('upi surname first_name').exec()
 }
 
 //fetch all the teachers of a particular school
 router.get('/schools/teachers/:school_id', async ctx => {
     await fetchSchoolTeachers(ctx.params.school_id).then(function (teachers) {
-        ctx.render('teachers', {teachers: teachers, school_admin: true})
+        ctx.body={teachers: teachers, school_admin: true}
+        // ctx.render('teachers', )
     })
 })
 
@@ -670,12 +684,13 @@ router.get('/schools/teachers/:school_id', async ctx => {
 async function fetchSchoolTeachers(school_id) {
     return await Teacher.find({
         "posting_history.current_school": school_id
-    }).select('tsc surname firstname').exec()
+    }).select('tsc surname first_name').exec()
 }
 
 //mark the teacher as retired
 router.get('/update_teacher_info/retired/:id', async ctx => {
-    ctx.render('retired', {teacher: ctx.params.id})
+    ctx.body=ctx.params.id
+    // ctx.render('retired', {teacher: ctx.params.id})
 })
 //handle retired information from the form
 router.post('/update_teacher_info/retired', koaBody, async ctx => {
@@ -699,7 +714,8 @@ async function markTeacherRetired(teacher) {
 
 //show clearance form
 router.get('/update_teacher_info/posting_history/:id', async ctx => {
-    ctx.render('posting_history', {id: ctx.params.id})
+    ctx.body=ctx.params.id
+    // ctx.render('posting_history', {id: ctx.params.id})
 })
 //clear a teacher
 router.post('/update_teacher_info/posting_history', koaBody, async ctx => {
@@ -732,7 +748,8 @@ async function clearTeacher(ctx, teacher) {
 
 //display form to mark teacher as dead
 router.get('/update_teacher_info/dead/:id', async ctx => {
-    ctx.render('dead', {id: ctx.params.id})
+    // ctx.render('dead', {id: ctx.params.id})
+    ctx.body=ctx.params.id
 })
 //process form to mark teacher as dead
 router.post('/update_teacher_info/dead/', koaBody, async ctx => {
@@ -756,7 +773,8 @@ async function markTeacherDead(teacher) {
 
 //show student clearance form
 router.get('/update_student_info/clearance/:id', async ctx => {
-    ctx.render('clear_student', {id: ctx.params.id})
+    ctx.body=ctx.params.id
+    // ctx.render('clear_student', {id: ctx.params.id})
 })
 //process student clearance form
 router.post('/update_student_info/clearance', koaBody, async ctx => {
@@ -874,5 +892,5 @@ app.listen(3002, () => {
 })
 
 /**
- * TODO reroute all urls to Backbone
+ * TODO reroute all urls to Front end
  **/
