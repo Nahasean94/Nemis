@@ -33,9 +33,9 @@ const StudentSchema = new Schema({
     performance: [{
         type: {
             type: String,
-            enum: ['KCPE', 'KCSE', 'Degree']
+            enum: ['KCPE', 'KCSE', 'Degree'],
         },
-        path: String,
+        path: String
     }],
     transfers: {
         current_school: {

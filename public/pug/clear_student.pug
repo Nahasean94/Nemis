@@ -6,7 +6,7 @@ html
         form(action="/update_student_info/clearance" method="post")
             input(type="hidden" value=id name="student_id")
             label(for="clear") Mark student as cleared
-            input(type="checkbox" id="clear" name="clear" required="true")
+            input(type="checkbox" id="clear" name="clear" value='clear' required="true")
             label(for="date") Date of clearance
             input(type="date" id="date" name="date" required="true")
             input(type="submit" value="submit"  )
