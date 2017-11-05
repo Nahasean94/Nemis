@@ -56,30 +56,6 @@ async function searchUPI(upi) {
     }).select('name performance').exec()
 }
 
-//display school admin login page
-// router.get('/:upi', async ctx => {
-//     ctx.session.upi = ctx.params.upi
-//     ctx.render('school_admin')
-// })
-//handle school admin login information
-/*router.post('/school_admin', koaBody, async ctx => {
-    const info = ctx.request.body
-    const username = info.username
-    const password = info.password
-    await checkLogin(ctx, username, password).then(function (response) {
-
-        // ctx.render('school_info')
-    })
-})
-
-//check for login information
-async function checkLogin(ctx, username, password) {
-    return SchoolAdmin.findOne({
-        upi: ctx.session.upi,
-        username: username,
-        password: password
-    }).exec()
-}*/
 
 //TODO remove this in production
 //school admin activities
@@ -846,40 +822,6 @@ function checkIfNull(object) {
 
     })
 }
-
-//check not undefined
-async function checkIfUndefined(object) {
-    return new Promise((res, rej) => {
-        const required = []
-        new Promise((res_, rej_) => {
-            if (typeof object === 'object') {
-                let counter = 0
-                for (let item in object) {
-                    if (object.hasOwnProperty(item)) {
-                        if (object[item].length === undefined) {
-                            required.push(item)
-                        }
-                        counter++
-                        if (counter === Object.keys(object).length)
-                            res_(required)
-                    }
-                }
-            } else {
-                if (item.length === undefined) {
-                    required.push(item)
-                    rej_(required)
-                }
-            }
-        }).then(required => {
-            if (required.length > 0)
-                rej(required)
-            else
-                res('all is ok')
-        })
-
-    })
-}
-
 
 //use middleware
 app.use(cors())
