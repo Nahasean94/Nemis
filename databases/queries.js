@@ -44,39 +44,25 @@ const queries = {
         })
     },
 //store teacher details
-    storeTeacherDetails: async function (teacher_info) {
-        return await School.findOne({
-            upi: teacher_info.school_upi
-        }).select('_id').exec().then(async function (school) {
-            if (school === null) {
-                return "No school matches that UPI"
-            }
-            else {
-                const teacher = new Teacher({
+    storeTeacherDetails: async function (ctx,teacher_info) {
+        return await new Teacher({
                     tsc: teacher_info.tsc,
                     surname: teacher_info.surname,
                     first_name: teacher_info.first_name,
                     second_name: teacher_info.second_name,
                     birthdate: teacher_info.dob,
                     gender: teacher_info.gender,
-                    'posting_history.current_school': school
-                })
-                try {
-                    return await teacher.save()
-                } catch (err) {
-                    return err
-                }
-            }
-        })
+                    'posting_history.current_school': ctx.session.school_id
+                }).save()
     },
     //returns the details of the school with the given id
     findSchoolDetails: async function (id) {
         return await School.findOne({_id: id}).exec()
     },
     //update school details
-    updateSchoolDetails: async function (school) {
+    updateSchoolDetails: async function (ctx,school) {
         return await School.findOneAndUpdate({
-                _id: school.id
+                _id: ctx.session.school_id
             }, {
                 name: school.name,
                 location: school.location,

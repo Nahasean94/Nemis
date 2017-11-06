@@ -27,3 +27,15 @@ This project is developed using Webstorm. It is highly recommended you use it al
 ### Work in progress
 The project as it is is usable. You can use it to develop a front end. Some key features missing at the moment, but will definitely be added include testing framework, better module system, encryption/hashing of passwords, a complete system admin API system, polishing, robust validation, etc. 
 
+##API
+####General
+**NOTE: _all routes are relative to `localhost:3000`, which i omit for brevity._**
+So for example `/search` means you include the full path: `localhost:3000/search` in your code/browser.
+
+`/` - sends a `get` request to the server that responds by rendering the home page. The home page contains among other links, a search form to search the student upi. 
+
+`/search` - sends a `post` request to the server. This should be used as the **action** value in the form displayed on the homepage. The name of the input field should be **upi**, e.g `<input type="text" name="upi" required placeholder="e.g AA-BB-43"`. If a student with that upi exists, the server responds with a JSON object with all details of that student. If the student doesn't exist, the server responds with an error in the format: `${upi} does not match any records`.
+`/logout` -sends a `get` request to the server to destroy a session and redirect the user to the home page
+
+####School admin
+``
