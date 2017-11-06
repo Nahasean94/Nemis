@@ -17,7 +17,7 @@ On the root folder, the only important files are **app.js** and **package.js**. 
 
 **app.js** is the entry point to the application. This is the file you will run to start the server, and it also contains the APIs.
 
-**databases** folder contains a **Schemas.js** file which contains the structure of various mongodb documents (tables in MySQL) used to store data.
+**databases** folder contains a **schemas.js** file which contains the structure of various mongodb documents (tables in MySQL) used to store data.
 
 **public** folder contains content that is to be served to the user, or uploaded by the user. This is where you place your **vue.js**/**react.js** etc files and other front-end stuff like  custom css and html. This folder contains a folder called **pug**. Pug is the new name for **jade**. You can go through each pug file in there to have a clue of how the front-end will consume the APIs. **Do not follow it to the letter though. The API has been updated to receive and respond through json object only. Use the pug files to know what various routes do**
 
