@@ -29,5 +29,5 @@ The project as it is is usable. You can use it to develop a front end. Some key 
 
 ## API
 
-To access the documentation for the API, visit `http://localhost:3000/front_end/api.html` in your browser to access the documentation.
+To access the documentation for the API, visit `http://localhost:3000/front_end/api.html` in your browser to access the documentation. Alternative to access the file go to `/public/front_end/api.html`
 
