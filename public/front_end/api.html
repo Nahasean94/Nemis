@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Documentation</title>
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+</head>
+<body>
+
+<div class="container">
+
+
+    <h1>DOCUMENTATION FOR THE NEMIS API</h1>
+<strong>KEEP CHECKING THIS DOCUMENTATION. NEW ROUTES/APIS WILL CONTINUE TO BE ADDED WITH TIME</strong>
+    <div><p><strong>NOTE: All routes are relative to <code>localhost:3000</code>, which I omit for
+        brevity.</strong>
+        So for example <code>/search</code> means you include the full path: <code>localhost:3000/search</code> in
+        your code/browser.</p></div>
+
+    IT IS REQUIRED OF THE FRONT END DEVELOPER TO OFFER THE 1ST LAYER OF VALIDATION. ALL REQUIRED VALIDATIONS
+    ARE INDICATED IN THE SECTIONS BELOW
+    <br>
+    <strong>We need to deliberate on how to upload certificates of the students to the system</strong>
+    <h2> General routes</h2>
+    <ol>
+        <li><code>GET /</code> - sends a request to the server that responds by rendering the home page.
+            The
+            home page contains among other links, a search form to search the student upi.
+        </li>
+
+        <li><p><code>POST /search</code> - sends a request to the server. This should be used as the
+            <strong>action</strong>
+            value in the form displayed on the homepage. The name of the input field should be <strong>upi</strong>, e.g
+            <code>input type="text" name="upi" required placeholder="e.g AA-BB-43"</code>. If a student with that upi
+            exists, the server responds with a JSON object with all details of that student. If the student doesn't
+            exist, the server responds with an error in the format: <code>${upi} does not match any records</code>. </p>
+        </li>
+
+        <li><code>GET /logout</code> -sends a request to the server to destroy a session and redirect the user to the
+            home page
+        </li>
+    </ol>
+    <h2>School admin</h2>
+    <ol>
+        <li><code>GET /school_admin/login/:upi</code>- the server first checks is the given upi exists, and if it does, fetch the school details. We are interested in the school id which will be used to authenticate the school admin. After this you should display the login form which sends login data to the route below. Use the id as a hidden field in the login form. If no school matches the given upi or some other error, a useful message will be return</li>
+        <li><code>POST /school_admin/login</code>- receives a JSON object withe the following properties
+        <ul>
+            <li><code>username</code>- required type=text</li>
+            <li><code>password</code>-required type=password</li>
+            <li><code>school_id</code>-required type=hidden. Should be a hidden field whose value is school_id from route above, i.e <code>/school_admin/login/:upi</code>. If successful login, the server returns the id of the school. If unsuccessful, a useful message will be returned.</li>
+        </ul>
+        </li>
+        <li><code>GET /school_admin/students</code>- returns an array of JSON objects containing all students of that school</li>
+        <li><code>GET /school_admin/teachers</code>- returns an array of JSON objects containing all teachers of that school</li>
+        <li><code>GET /school_admin/students/register_student</code> - sends a request to the server which renders the
+            form to register a new student.
+        </li>
+        <li><code>POST /school_admin/students/register_student</code> - when used in a form, you send a json object with
+            the following properties :
+            <ul>
+                <li><code>surname</code>- required, type=text</li>
+                <li><code>first_name</code>- required, type=text</li>
+                <li><code>second_name</code>- not required, type=text</li>
+                <li><code>dob</code>- date of birth, required, type=date</li>
+                <li><code>gender</code>- required, values either male or female</li>
+            </ul>
+            The student automatically becomes a student in that school. When saving the details, if successful, the
+            server redirects the user to the route <code>/school_admin/students</code>. If not successful in either
+            validation or server error, you will get a helpful error message.
+        </li>
+        <li><code>GET /school_admin/teachers/register_teacher</code> - sends a request to the server which renders the
+            form to register a new teacher.
+        </li>
+        <li><code>POST /school_admin/teachers/register_teacher</code> - when used in a form, you send a json object with
+            the following properties :
+            <ul>
+                <li><code>tsc</code>- TSC Number, required, type=text</li>
+                <li><code>surname</code>- required, type=text</li>
+                <li><code>first_name</code>- required, type=text</li>
+                <li><code>second_name</code>- not required, type=text</li>
+                <li><code>dob</code>- date of birth, required, type=date</li>
+                <li><code>gender</code>- required, values either male or female</li>
+            </ul>
+            The student automatically becomes a teacher in that school. When saving the details, if successful, the
+            server redirects the user to the route <code>/school_admin/teachers</code>. If not successful in either
+            validation or server error, you will get a helpful error message.
+        </li>
+        <li><code>GET /school_admin/update_school_info</code>- sends a get request to the server which returns a json
+            object with all the details of the school if successful, or a helpful error message
+        </li>
+        <li><code>POST /school_admin/update_school_info</code>- sends a post request with a JSON object to the server.
+            Properties of the object include:
+            <ul>
+                <li><code>name</code>- required, type=text, refers to name of the school</li>
+                <li><code>location</code>- required, type=text, refers to location of the school</li>
+                <li><code>category</code>- required, type=dropdown option values=ecde/primary/secondary/tertiary, refers
+                    to category of the school
+                </li>
+                <li><code>classes</code>- required, type=number, refers to the number of classes in the school</li>
+                <li><code>playing_fields</code>- required, type=number, refers to the number of playing fields in the
+                    school
+                </li>
+                <li><code>halls</code>- required, type=number, refers to the number of halls in the school</li>
+                <li><code>dormitories</code>- required, type=number, refers to the number of dormitories/hostels in the
+                    school
+                </li>
+                <li><code>buses</code>- required, type=number, refers to the number of buses in the school</li>
+                <li><code>farming_land</code>- required, type=number, refers to the number of acres of farming land in
+                    the school
+                </li>
+                <li><code>farming_land</code>- required, type=number, refers to the number of acres of farming land in
+                    the school
+                </li>
+                <li><code>science_labs</code>- required, type=number, refers to the number of science labs in the school
+                </li>
+                <li><code>ratio</code>- required, type=text, refers to the ratio of books to student in the school.
+                    Format=books:students
+                </li>
+                <li><code>email</code>- required, type=email, refers to the email address of the school</li>
+                <li><code>phone1</code>- required, type=number, refers to the phone number 1 of the school</li>
+                <li><code>phone2</code>- optional, type=number, refers to the phone number 2 of the school</li>
+                <li><code>address</code>- required, type=text, refers to the postal address of the school. Format=P.O
+                    Box 236 Nairobi
+                </li>
+            </ul>
+            When successful, the server redirects the user to <code>/school_admin/school_info</code>. A helpful error
+            message will be sent to the browser if unsuccessful
+        </li>
+        <li><code>GET /school_admin/students/:id</code>-:id stands for the id of the student. You should generate a href
+            on each student which maintains the id of the student when you get the list of students at the path <code>/school_admin/students</code>.
+            The server responds with an object containing student details. In case of any errors, a helpful message will
+            be returned.
+        </li>
+        <li><code>GET /school_admin/teachers/:id</code>-:id stands for the id of the student. You should generate a href
+            on each student which maintains the id of the teacher when you get the list of teachers at the path <code>/school_admin/teachers</code>.
+            The server responds with an object containing teacher details. In case of any errors, a helpful message will
+            be returned.
+        </li>
+        <li><code>GET /school_admin/update_teacher_info/:id</code>- sends a request to the server which responds with an
+            object containing the details of the teacher with the given id. This information can be used to pre-populate
+            a form to make it easy to edit the information
+        </li>
+        <li><code>POST /school_admin/update_teacher_info/</code>- receives a JSON object containing the following
+            properties:
+            <ul>
+                <li><code>tsc</code>-required, type=text refers to TSC Number of the teacher</li>
+                <li><code> surname</code>-required, type=text</li>
+                <li><code>first_name</code>-required, type=text</li>
+                <li><code>second_name</code>-optional, type=text</li>
+                <li><code>dob</code>-required, type=date refers to the date of birth</li>
+                <li><code>gender</code>-required, type=text value=male/female</li>
+                <li><code>email</code>-required, type=email</li>
+                <li><code>phone1</code>-required, type=number</li>
+                <li><code>phone2</code>-optional, type=number</li>
+                <li><code>address</code>-required, type=text refers to postal address of the teacher. Format= P.O Box
+                    2123 Nairobi
+                </li>
+                <li><code>date_posted</code>-required, type=date. Refers to the date the teacher was posted at the
+                    current school
+                </li>
+                <li><code>subjects</code>-required, type=text, this is comma separated list of subject they teach. e.g
+                    English, Geography...You can have a dropdown list or any way you want to implement it on the browser
+                </li>
+                <li><code>responsibility</code>-required, type=text. Refers to responsibilities like HOD, Principal, etc
+                </li>
+                <li><code>date_assigned</code>-required, type=date, refers to the date assigned the above
+                    responsibility.
+                </li>
+            </ul>
+            If successful, the server redirects the user to <code>/school_admin/teachers/:id</code>. If unsuccessful, an helpful error message will be returned.
+        </li>
+        <li><code>GET /school_admin/update_teacher_info/retired/:id</code>- should display a form the front end developer creates to mark the teacher as retired. The fields include a check box to mark teacher as retired, and the date.Use the id in the url as a hidden input field. Submit the data through the route below. </li>
+
+        <li><code>POST /school_admin/update_teacher_info/retired</code>- receives a JSON object containing the following properties:
+        <ul>
+            <li><code>teacher_id</code>-required, type=hidden, value is the id in the url</li>
+            <li><code>date</code>-required, type=date. Date the teacher retired.</li>
+        </ul>
+            Validate the checkbox to make sure it is required on the front end. On the back end it is not needed.
+            Helpful messages will be displayed in case of any errors
+        </li>
+
+        <li><code>GET /school_admin/update_teacher_info/posting_history/:id</code>- should display a form the front end developer creates to mark the teacher as transferred/cleared. The fields include a check box to mark teacher as cleared from the school, and the date.Use the id in the url as a hidden input field. Submit the data through the route below. </li>
+
+        <li><code>POST /school_admin/update_teacher_info/posting_history</code>- receives a JSON object containing the following properties:
+            <ul>
+                <li><code>teacher_id</code>-required, type=hidden, value is the id in the url</li>
+                <li><code>date</code>-required, type=date. Date the teacher cleared.</li>
+            </ul>
+            Validate the checkbox to make sure it is required on the front end. On the back end it is not needed.
+            Helpful messages will be displayed in case of any errors
+        </li>
+
+        <li><code>GET /school_admin/update_teacher_info/dead/:id</code>- should display a form the front end developer creates to mark the teacher as dead. The fields include a check box to mark teacher as dead, and the date and cause of death.Use the id in the url as a hidden input field. Submit the data through the route below. </li>
+
+        <li><code>POST /school_admin/update_teacher_info/dead</code>- receives a JSON object containing the following properties:
+            <ul>
+                <li><code>teacher_id</code>-required, type=hidden, value is the id in the url</li>
+                <li><code>date</code>-required, type=date. Date the teacher died.</li>
+                <li><code>cause</code>-required, type=text. Cause of death.</li>
+            </ul>
+            Validate the checkbox to make sure it is required on the front end. On the back end it is not needed.
+            Helpful messages will be displayed in case of any errors
+        </li>
+        <li><code>GET /school_admin/update_student_info/:id</code>- sends a request to the server which responds with an
+            object containing the details of the student with the given id. This information can be used to pre-populate
+            a form to make it easy to edit the information
+        </li>
+        <li><code>POST /school_admin/update_student_info</code>- receives a JSON object containing the following properties:
+        <ul>
+           <li><code>surname</code>-required type=text</li>
+            <li><code>first_name</code>-required type=text</li>
+            <li><code>second_name</code>-optional type=text</li>
+            <li><code>dob</code>-required type=text</li>
+            <li><code>gender</code>-required type=text values=male/female</li>
+            <li><code>reporting_date</code>-required type=date refers to the date the student reported in the school</li>
+        </ul>
+            If successful, the server redirects the user to <code>/school_admin/students/:id</code>. If unsuccessful, an helpful error message will be returned.
+        </li>
+
+        <li><code>GET /school_admin/update_student_info/clearance/:id</code>- should display a form the front end developer creates to mark the student as cleared. The fields include a check box to mark student as cleared, and the date.Use the id in the url as a hidden input field. Submit the data through the route below. </li>
+
+        <li><code>POST /school_admin/update_student_info/clearance</code>- receives a JSON object containing the following properties:
+            <ul>
+                <li><code>student_id</code>-required, type=hidden, value is the id in the url</li>
+                <li><code>date</code>-required, type=date. Date the student cleared.</li>
+            </ul>
+            Validate the checkbox to make sure it is required on the front end. On the back end it is not needed.
+            Helpful messages will be displayed in case of any errors
+        </li>
+    </ol>
+
+</div>
+</body>
+</html>

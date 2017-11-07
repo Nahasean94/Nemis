@@ -273,7 +273,7 @@ router.post('/school_admin/students/register_student', koaBody, async ctx => {
         birthdate: student_info.dob,
         gender: student_info.gender
     }).then(async function (required) {
-        await queries.storeStudentDetails(student_info).then(async function (student) {
+        await queries.storeStudentDetails(ctx,student_info).then(async function (student) {
             ctx.redirect(`/school_admin/students`)
         }).catch(function (err) {
             ctx.body=err
@@ -285,12 +285,12 @@ router.post('/school_admin/students/register_student', koaBody, async ctx => {
 
 
 //display teachers registration form
-router.get('/school_admin/register_teacher', async ctx => {
+router.get('/school_admin/teachers/register_teacher', async ctx => {
     ctx.render('register_teacher')
 })
 
 //register new student details in the database
-router.post('/school_admin/register_teacher', koaBody, async ctx => {
+router.post('/school_admin/teachers/register_teacher', koaBody, async ctx => {
     const teacher_info = ctx.request.body
     await validation.checkIfNull({
         tsc: teacher_info.tsc,
@@ -401,9 +401,9 @@ router.post('/school_admin/update_teacher_info', koaBody, async ctx => {
 })
 
 //update student info
-router.get('/school_admin/update_teacher_info/:id', async ctx => {
+router.get('/school_admin/update_student_info/:id', async ctx => {
     if (ctx.session.school_id === undefined) {
-        await queries.fetchTeacherDetails(ctx.params.id).then(function (student) {
+        await queries.fetchStudentDetails(ctx.params.id).then(function (student) {
             // ctx.render('update_student_info', {student: student})
             ctx.body = student
         }).catch(function (err) {
@@ -623,7 +623,7 @@ router.post('/school_admin/update_student_info/clearance', koaBody, async ctx =>
 
 //use middleware
 app.use(cors())
-// app.use(serve({rootDir: './public', path: 'public'}))
+app.use(serve({rootDir: './public', path: 'public'}))
 app.use(session(CONFIG, app))
 pug.use(app)
 app.use(router.routes())

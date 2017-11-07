@@ -164,18 +164,7 @@ const SchoolSchema = new Schema({
             type: Number,
             default: 0
         },
-        //
-        livestock: [{
-            type: String,
-            quantity: Number
-        }],
         farming_land: {
-            type: Number,
-            default: 0
-        }
-    },
-    equipment: {
-        labs: {
             type: Number,
             default: 0
         }

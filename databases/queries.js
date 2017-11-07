@@ -25,7 +25,7 @@ const queries = {
         const upi = `${preHyphen}-${mid}-${postHyphen}`
         await School.findOne({
             upi: student.upi
-        }).select('_id').exec().then(function (school_id) {
+        }).select('_id').exec().then(function (ctx,school_id) {
             student.school_id = school_id
         })
         return new Student({
@@ -36,7 +36,7 @@ const queries = {
             second_name: student.second_name,
             birthdate: student.dob,
             gender: student.gender,
-            'transfers.current_school': student.school_id
+            'transfers.current_school': ctx.session.school_id
         }).save().catch(err => {
             if ((err.message).split(' ')[0] === 'E11000') {
                 this.storeStudentDetails(student)
@@ -72,9 +72,7 @@ const queries = {
                 'infrastructure.halls': school.halls,
                 'infrastructure.dormitories': school.dormitories,
                 'assets.buses': school.buses,
-                // livestock: school.livestock,
                 'assets.farming_land': school.farming_land,
-                'equipment.labs': school.labs,
                 'learning_materials.science_labs': school.science_labs,
                 'learning_materials.book_ratio': school.ratio,
                 'contact.email': school.email,
