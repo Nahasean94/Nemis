@@ -1,5 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Docker Deployment" type="docker-deploy" factoryName="Docker Deployment" server-name="Nemis">
+  <configuration default="false" name="Docker Deployment" type="docker-deploy" factoryName="docker-image" server-name="Nemis">
     <deployment type="docker-image">
       <settings>
         <option name="JSONFilePath" value="" />
@@ -15,3 +16,4 @@
     <method />
   </configuration>
 </component>
+

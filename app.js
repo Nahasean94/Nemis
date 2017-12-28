@@ -81,7 +81,7 @@ router.get('/admin', async ctx => {
 //admin login
 router.post('/admin_login', koaBody, async ctx => {
     const details = ctx.request.body
-    if (details.login_email.length < 1 || details.login_password.length < 1) {
+    if (details.username.length < 1 || details.login_password.length < 1) {
         ctx.body = 'fill_all'
     }
     else {
@@ -493,7 +493,7 @@ app.use(cors())
 app.use(session(CONFIG, app))
 pug.use(app)
 app.use(router.routes())
-app.listen(3002, () => {
+app.listen(3000, () => {
     console.log("Server running on port 3002")
 })
 
