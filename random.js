@@ -1,7 +1,11 @@
 "use strict"
-const Human={
-    getName:function () {
-        return "nahashon"
-    }
+const Human = exports
+
+Human.getName = function () {
+    return "nahashon"
 }
-module.exports=Human
+
+Human.chew=function (callback) {
+    callback()
+}
+

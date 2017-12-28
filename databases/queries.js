@@ -5,6 +5,8 @@ const mongoose = require('mongoose')
 //Connect to Mongodb
 //TODO add username and password
 mongoose.connect('mongodb://localhost/nemis', {useMongoClient: true, promiseLibrary: global.Promise})
+
+
 const queries = {
     //search the UPI of the student
     searchUPI: async function (upi) {
