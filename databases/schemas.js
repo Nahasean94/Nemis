@@ -20,7 +20,7 @@ const StudentSchema = new Schema({
         type: String,
         required: [true, 'First name is required']
     },
-    second_name: String,
+    last_name: String,
     birthdate: {
         type: Date,
         required: [true, 'Date of birth is required']
@@ -39,14 +39,14 @@ const StudentSchema = new Schema({
     }],
     transfers: {
         current_school: {
-            type: Schema.Types.ObjectId, ref: 'School',
+            type: String,
             required: [true, 'School UPI is required']
         },
         reporting_date: {
             type: Date
         },
         previous_school: [{
-            school_id: {type: Schema.Types.ObjectId, ref: 'School'},
+            school_upi:String ,
             reporting_date: {
                 type: Date
             },
@@ -80,17 +80,17 @@ const TeacherSchema = new Schema({
         required: [true, 'Gender is required'],
         enum: ['male', 'female', 'other']
     },
+    nationalID:Number,
     contact: {
         email: {
             type: String,
             set: setEmail,
         },
         phone1: Number,
-        phone2: Number,
         address: String
     },
     posting_history: {
-        current_school: {type: Schema.Types.ObjectId, ref: 'School'},
+        current_school: {type:String},
         reporting_date: {
             type: Date
         },
@@ -135,11 +135,14 @@ const SchoolSchema = new Schema({
         type: String,
         required: [true, "Name of the school is required"]
     },
-    location: String,
+    county: {
+        type:String,
+        default:''
+    },
     category: {
         type: String,
         required: [true, 'Each school must belong to a category'],
-        enum: ['ecde', 'primary', 'secondary', 'tertiary']
+        enum: ['ECDE', 'primary', 'secondary', 'tertiary']
     },
     infrastructure: {
         classes: {
@@ -177,16 +180,27 @@ const SchoolSchema = new Schema({
         },
         book_ratio: {
             type: String,
+
         }
     },
     contact: {
         email: {
             type: String,
             set: setEmail,
+            default:''
         },
-        phone1: Number,
-        phone2: Number,
-        address: String
+        phone1:{
+            type:Number,
+            default:0
+        } ,
+        phone2: {
+            type:Number,
+            default:0
+        },
+        address: {
+            type:String,
+            default: ''
+        }
     }
 })
 
@@ -194,9 +208,8 @@ const MinistrySchema = new Schema({
     policy: [{
         title: String,
         description: String,
-        date: {
+        timestamp: {
             type: Date,
-            default: new Date()
         }
     }]
 })
@@ -206,9 +219,8 @@ const DeceasedSchema = new Schema({
         unique: true,
         required: [true, 'UPI is required']
     },
-    date: {
+    timestamp: {
         type: Date,
-        default: new Date()
     },
     date_of_death: Date,
     cause_of_death: String,
@@ -221,22 +233,18 @@ const RetiredSchema = new Schema({
         unique: true,
         required: [true, 'Teacher id is required']
     },
-    date: {
+    timestamp: {
         type: Date,
-        default: new Date()
     }
 })
 const SchoolAdminSchema = new Schema({
-    school_id: {
-        type: Schema.Types.ObjectId,
-        ref: 'School',
+    school_upi: {
+       type:String,
         required: [true, 'UPI is required']
     },
-    date:
+    timestamp:
         {
             type: Date,
-            default:
-                new Date()
         }
     ,
     username: {
@@ -250,7 +258,8 @@ const SchoolAdminSchema = new Schema({
         type: String,
         required:
             [true, 'Password is required']
-    }
+    },
+    role:{type:String,default:'school'}
 })
 const AdministratorSchema = new Schema({
     email: {
@@ -271,9 +280,8 @@ const AdministratorSchema = new Schema({
         type: String,
         enum: ['system', 'nemis']
     },
-    date: {
+    timestamp: {
         type: Date,
-        default: new Date()
     }
 })
 

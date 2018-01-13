@@ -1,3 +1,4 @@
 module.exports={
-    jwtSecret:"Somejsonwebtokensecret"
+    systemAdminSecret:"Somejsonwebtokensecretforsystemadmin",
+    schoolAdminSecret:"Somejsonwebtokensecretforschooladmin"
 }

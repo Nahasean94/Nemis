@@ -11,9 +11,17 @@ const KoaBody = require('koa-body')
 const cors = require('koa2-cors')
 const fs = require('fs')
 const serve = require('koa-static-server')
-const queries=require('./databases/queries')
-const validation=require('./validation')
-
+const queries = require('./databases/queries')
+const validation = require('./validation')
+const bcrypt = require('bcrypt')
+const jwt = require('jsonwebtoken')
+const {Administrator} = require('./databases/schemas')
+// const mongoose = require('mongoose')
+const {systemAdminSecret, schoolAdminSecret} = require('./config')
+const {authenticateSystemAdmin, authenticateSchoolAdmin} = require('./middleware/authenticate')
+//Connect to Mongodb
+//TODO add username and password
+// mongoose.connect('mongodb://localhost/nemis', {useMongoClient: true, promiseLibrary: global.Promise})
 //allow uploading of files
 const koaBody = new KoaBody({
     multipart: true,
@@ -23,45 +31,32 @@ const koaBody = new KoaBody({
 const router = new Router()
 const app = new Koa()
 
-app.keys = ['nemis imeweza']
-// const upload = multer({dest: 'uploads/'})
-
-const CONFIG = {
-    key: 'koa:sess',
-    maxAge: 86400000,
-    overwrite: true,
-    httpOnly: true,
-    signed: true,
-    rolling: false
-}
-
-const pug = new Pug({
-    viewPath: './public/pug'
-})
-//display the homepage with a form to search a upi
-router.get('/', async ctx => {
-    ctx.render('index')
-})
 //handle searching of upis to display student results
 router.post('/search', koaBody, async ctx => {
-    await queries.searchUPI(ctx.request.body.upi).then(async function (results) {
-        if(results===null){
-        ctx.body = `${ctx.request.body.upi} does not match any records`
-
-        }
-        else {
+    const upi=ctx.request.body.upi
+    await queries.searchUPI(upi).then(async function (results) {
         ctx.body = results
-
-        }
+    }).catch(function (err) {
+        ctx.status = 500
+        ctx.body = {errors: err}
     })
 })
-
 
 
 //TODO remove this in production
 //school admin activities
 router.get('/school_info', async ctx => {
     ctx.render('school_info')
+
+})
+router.post('/school_info', koaBody, authenticateSchoolAdmin, async ctx => {
+    const upi = ctx.request.body.upi
+    await queries.findSchoolDetailsByUpi(upi).then(function (school) {
+        ctx.body = school
+    }).catch(function (err) {
+        ctx.status = 500
+        ctx.body = {errors: err}
+    })
 
 })
 //display the admin page
@@ -80,34 +75,45 @@ router.get('/admin', async ctx => {
 })
 //admin login
 router.post('/admin_login', koaBody, async ctx => {
-    const details = ctx.request.body
-    if (details.login_email.length < 1 || details.login_password.length < 1) {
-        ctx.body = 'fill_all'
-    }
-    else {
-        const query = Administrator.findOne({
-            'email': details.login_email,
-            'password': details.login_password
-        })
-        query.select('email username password role')
-        await query.exec().then(async function (person) {
-            //analyse the results from the database to know if the user is signed in.
-            if (person !== null) {
-                ctx.session.username = person.username
-                ctx.session.email = person.email
-                ctx.session.role = person.role
-                ctx.session.isNew = false
-                ctx.body=person
-                // ctx.redirect('/admin')
+        const {username, password} = ctx.request.body
+        if (username === '' || password === '') {
+            ctx.body = {
+                errors: {form: 'All fields are required'}
             }
-            else {
-                ctx.body = "You are not registered"
-            }
-        }).catch(function (err) {
-            ctx.body = err
-        })
+        }
+        else {
+            await Administrator.findOne({
+                'username': username
+            }).select('_id username password role').exec().then(async function (admin) {
+                //compare passwords to see if the user is registered
+                // console.log(admin)
+                if (admin) {
+                    if (bcrypt.compareSync(password, admin.password)) {
+                        ctx.body = {
+                            token: jwt.sign({
+                                id: admin._id,
+                                role: admin.role,
+                                username: admin.username
+                            }, systemAdminSecret)
+                        }
+                    }
+                    else {
+                        ctx.status = 401
+                        ctx.body = {errors: {form: "No administrator found with that password"}}
+                    }
+                }
+                else {
+                    ctx.status = 401
+                    ctx.body = {errors: {form: "No administrator found with that username"}}
+
+                }
+            }).catch(function (err) {
+                ctx.status = 500
+                ctx.body = err
+            })
+        }
     }
-})
+)
 //logout
 router.get('/logout', async ctx => {
     //Clear the session
@@ -122,19 +128,14 @@ router.get('/register_student', async ctx => {
 //register new student details in the database
 router.post('/register_student', koaBody, async ctx => {
     const student_info = ctx.request.body
-    await validation.checkIfNull({
-        surname: student_info.surname,
-        first_name: student_info.first_name,
-        birthdate: student_info.dob,
-        gender: student_info.gender
-    }).then(async function (required) {
-        await queries.storeStudentDetails(student_info).then(async function (student) {
-            ctx.redirect(`/schools/students/${student.transfers.current_school._id}`)
-        })
 
-    }).catch(function (required) {
-        ctx.body = `The following fields are required: ${required}`
+    await queries.storeStudentDetails(student_info).then(async function (student) {
+        ctx.body = student
+    }).catch(function (err) {
+        ctx.body = 500
+        ctx.body = {errors: err}
     })
+
 })
 
 
@@ -145,45 +146,54 @@ router.get('/register_teacher', async ctx => {
 //register new student details in the database
 router.post('/register_teacher', koaBody, async ctx => {
     const teacher_info = ctx.request.body
-    await validation.checkIfNull({
-        tsc: teacher_info.tsc,
-        surname: teacher_info.surname,
-        first_name: teacher_info.first_name,
-        second_name: teacher_info.second_name,
-        birthdate: teacher_info.dob,
-        gender: teacher_info.gender
-    }).then(async function (required) {
-        await  queries.storeTeacherDetails(teacher_info).then(function (saved) {
-            ctx.redirect(`/schools/teachers/${saved.posting_history.current_school._id}`)
-        })
-    }).catch(function (required) {
-        ctx.body = `The following are required fields: ${required}`
+    // await validation.checkIfNull({
+    //     tsc: teacher_info.tsc,
+    //     surname: teacher_info.surname,
+    //     first_name: teacher_info.first_name,
+    //     second_name: teacher_info.second_name,
+    //     birthdate: teacher_info.dob,
+    //     telephone: teacher_info.telephone,
+    //     email: teacher_info.email,
+    //     gender: teacher_info.gender,
+    //     nationalID: teacher_info.nationalID,
+    //     school_upi: teacher_info.school_upi,
+    // }).then(async function (required) {
+    await  queries.storeTeacherDetails(teacher_info).then(function (saved) {
+        ctx.body = saved
+    }).catch(function (err) {
+        ctx.status = 500
+        ctx.body = {errors: err}
     })
+    // }).catch(function (required) {
+    //         ctx.status=500
+    //     ctx.body ={errors: `The following are required fields: ${required}`}
+    // })
 })
 
 
 //display school update_info form
 router.get('/update_school_info/:upi', async ctx => {
     await queries.findSchoolByUpi(ctx.params.upi).then(function (school) {
-        ctx.body=school
+        ctx.body = school
         // ctx.render('update_school_info', {school: school})
     })
 })
 router.get('/schools/update_school_info/:id', async ctx => {
-   queries.findSchoolDetails(ctx.params.id).then(function (school) {
-        ctx.body=school
+    queries.findSchoolDetails(ctx.params.id).then(function (school) {
+        ctx.body = school
         // ctx.render('update_school_info', {school: school})
     })
 })
 //update school_info details in the database
 router.post('/update_school_info', koaBody, async ctx => {
     const school_info = ctx.request.body
-
     await queries.updateSchoolDetails(school_info).then(async function (school) {
-        ctx.redirect(`/admin/schools/${school.upi}`)
+        ctx.body = school
+    }).catch(function (err) {
+        ctx.status = 500
+        ctx.body = err
     })
 })
-
 
 
 //display ministry of education policy form
@@ -239,19 +249,26 @@ router.get('/admin/register_school_admin', ctx => {
     ctx.render('register_school_admin')
 })
 //receive form details to register new school admin
-router.post('/admin/register_school_admin', koaBody, async ctx => {
+router.post('/admin/register_school_admin', authenticateSystemAdmin, koaBody, async ctx => {
     const admin = ctx.request.body
-    validation.checkIfNull({
-        password: admin.password,
-        confirm_password: admin.cpass,
-        email: admin.email,
-        username: admin.username.length
-    }).then(async function (message) {
-        await queries.saveSchoolAdminDetails(admin).then(function (admin) {
-            ctx.redirect('/admin/school_admins')
-        })
+
+    await queries.saveSchoolAdminDetails(admin).then(function (admin) {
+        ctx.body = admin
+
     }).catch(function (err) {
-        ctx.body = `The following fields are required: ${err}`
+        ctx.status = 500
+        ctx.body = {errors: err}
+    })
+})
+router.post('/admin/update_school_admin', authenticateSystemAdmin, koaBody, async ctx => {
+    const admin = ctx.request.body
+
+    await queries.updateSchoolAdmin(admin).then(function (admin) {
+        ctx.body = admin
+
+    }).catch(function (err) {
+        ctx.status = 500
+        ctx.body = {errors: err}
     })
 })
 
@@ -262,41 +279,49 @@ router.get('/register_school', ctx => {
 })
 
 //process school registration
-router.post('/register_school', koaBody, async ctx => {
-    const status = await queries.storeSchoolDetails(ctx.request.body)
-    if (status === 'saved') {
-        ctx.body = 'School details successfully saved'
-    } else {
-        ctx.body = status
-    }
+router.post('/register_school', authenticateSystemAdmin, koaBody, async ctx => {
+    await queries.storeSchoolDetails(ctx.request.body).then(function (school) {
+        ctx.body = school
+    }).catch(function (err) {
+        ctx.status = 500
+        ctx.body = err
+    })
 })
 
 //get students
 router.get('/admin/students', async ctx => {
     // ctx.render('students', {students: await Student.find().select('id surname first_name')})
-    ctx.body=await queries.fetchAllStudents()
+    ctx.body = await queries.fetchAllStudents()
 })
 //get teachers
 router.get('/admin/teachers', async ctx => {
     // ctx.render('teachers', {teachers: await Teacher.find().select('id surname first_name')})
-    ctx.body=await queries.fetchAllTeachers()
+    ctx.body = await queries.fetchAllTeachers()
 })
 //get schools
 router.get('/admin/schools', async ctx => {
-    // ctx.render('schools', {schools: await School.find().select('id name category')})
-    ctx.body=await queries.fetchAllSchools()
+    await queries.fetchAllSchools().then(function (schools) {
+        if (schools) {
+            ctx.body = schools
+        } else {
+            ctx.body = "No schools found in the database"
+        }
+    }).catch(function (err) {
+        ctx.status = 500
+        ctx.body = err
+    })
 
 })
 //get school admins
 router.get('/admin/school_admins', async ctx => {
-    ctx.render('school_admins', {school_admins: await SchoolAdmin.find().select('upi username')})
-    ctx.body=await  queries.fetchAllSchoolAdmins()
+
+    ctx.body = await  queries.fetchAllSchoolAdmins()
 })
 
 //get individual school details
 router.get('/admin/schools/:id', async ctx => {
     await queries.findSchoolDetails().then(function (school) {
-        ctx.body=school
+        ctx.body = school
         // ctx.render('school_info', {school: school})
     })
 
@@ -310,7 +335,7 @@ router.get('/students/:id', async ctx => {
         if (student.transfers.previous_school.length < 1) {
             student.transfers.previous_school[0] = 'No previous school records found'
         }
-        ctx.body=student
+        ctx.body = student
         // ctx.render('student_info', {student: student})
     })
 })
@@ -319,7 +344,7 @@ router.get('/students/:id', async ctx => {
 router.get('/teachers/:id', async ctx => {
     await queries.fetchTeacherDetails(ctx.params.id).then(function (teacher) {
         // ctx.render('teacher_info', {teacher: teacher})
-        ctx.body=teacher
+        ctx.body = teacher
     })
 })
 
@@ -327,48 +352,37 @@ router.get('/teachers/:id', async ctx => {
 router.get('/update_teacher_info/:id', async ctx => {
     await queries.fetchTeacherDetails(ctx.params.id).exec().then(function (teacher) {
         // ctx.render('update_teacher_info', {teacher: teacher})
-        ctx.body=teacher
+        ctx.body = teacher
     })
 })
 
 //register new student details in the database
 router.post('/update_teacher_info', koaBody, async ctx => {
     const teacher_info = ctx.request.body
-
-    await queries.updateTeacherDetails(teacher_info).then(async function (teacher) {
-        ctx.redirect(`/teachers/${teacher._id}`)
+    await queries.updateTeacherDetails(teacher_info).then(function (teacher) {
+        ctx.body = teacher
+    }).catch(function (err) {
+        ctx.status = 500
+        ctx.body = {errors: err}
     })
 })
-
 
 
 //update student info
 router.get('/update_student_info/:id', async ctx => {
     await queries.fetchTeacherDetails(ctx.params.id).then(function (student) {
         // ctx.render('update_student_info', {student: student})
-    ctx.body=student
+        ctx.body = student
     })
 })
 //register new student details in the database
 router.post('/update_student_info', koaBody, async ctx => {
     const student_info = ctx.request.body
-    await validation.checkIfNull({
-        surname: student_info.surname,
-        first_name: student_info.first_name,
-        birthdate: student_info.dob,
-        gender: student_info.gender
-    }).then(async function (required) {
-        await queries.updateStudentDetails(student_info).then(async function (student) {
-            if ((student.performance).length < 1) {
-                student.performance[0] = 'No performance records found'
-            }
-            if (student.transfers.previous_school.length < 1) {
-                student.transfers.previous_school[0] = 'No previous school records found'
-            }
-            ctx.redirect(`/students/${student.id}`)
-        })
-    }).catch(function (required) {
-        ctx.body = `The following fields are required: ${required}`
+    await queries.updateStudentDetails(student_info).then(async function (student) {
+        ctx.body = student
+    }).catch(function (err) {
+        ctx.status = 500
+        ctx.body = {errors: err}
     })
 })
 
@@ -382,53 +396,73 @@ router.get('/schools/:upi', async ctx => {
         }
         else {
             // ctx.render('school_admin_login', {school: results})
-            ctx.body=results
+            ctx.body = results
         }
+    })
+})
+router.post('/schools', koaBody, async ctx => {
+    await queries.checkSchoolByName(ctx.request.body.name).then(function (school) {
+        ctx.body = school
+    }).catch(function (err) {
+        ctx.status = 500
+        ctx.body = err
     })
 })
 
 //handle school admin login credentials
 router.post('/school_admin_login', koaBody, async ctx => {
     await queries.handleSchoolAdminLogin(ctx.request.body).then(function (admin_details) {
-        if (admin_details === null) {
-            ctx.body = 'invalid credntails. Please try again'
+        if (admin_details) {
+            ctx.body =
+                {
+                    token: jwt.sign({
+                        id: admin_details._id,
+                        school_upi: admin_details.school_upi,
+                        username: admin_details.username,
+                        role: admin_details.role
+                    }, schoolAdminSecret)
+                }
         }
         else {
-            ctx.session.school_id = admin_details.school_id
-            ctx.body= admin_details.school_id
-            // ctx.render('school_admin_dashboard', {school_id: admin_details.school_id})
+            ctx.status = 404
+            ctx.body = {errors: 'No user with such credentials'}
         }
+    }).catch(function (err) {
+        ctx.status = 500
+        ctx.body = err
     })
 })
 
 
 //fetch students of a particular school
-router.get('/schools/students/:school_id', async ctx => {
-    await queries.fetchSchoolStudents(ctx.params.school_id).then(function (students) {
-        if (students.length < 1) {
-            students = 'The school has no registered students'
-        }
-        // students.school_id=ctx.params.school_id
+router.post('/schools/students', koaBody, async ctx => {
+    const upi = ctx.request.body.upi
+    await queries.fetchSchoolStudents(upi).then(function (students) {
+        ctx.body = students
 
-        ctx.body={students: students, school_id: ctx.params.school_id}
-        // ctx.render('students', {students: students, school_id: ctx.params.school_id})
+    }).catch(function (err) {
+        ctx.status = 500
+        ctx.body = {errors: err}
     })
 })
 
 
-
 //fetch all the teachers of a particular school
-router.get('/schools/teachers/:school_id', async ctx => {
-    await queries.fetchSchoolTeachers(ctx.params.school_id).then(function (teachers) {
-        ctx.body={teachers: teachers, school_admin: true}
+router.post('/schools/teachers', koaBody, authenticateSchoolAdmin, async ctx => {
+    const upi = ctx.request.body.upi
+    await queries.fetchSchoolTeachers(upi).then(function (teachers) {
+        ctx.body = teachers
         // ctx.render('teachers', )
+    }).catch(function (err) {
+        ctx.status = 500
+        ctx.body = {errors: err}
     })
 })
 
 
 //mark the teacher as retired
 router.get('/update_teacher_info/retired/:id', async ctx => {
-    ctx.body=ctx.params.id
+    ctx.body = ctx.params.id
     // ctx.render('retired', {teacher: ctx.params.id})
 })
 //handle retired information from the form
@@ -441,7 +475,7 @@ router.post('/update_teacher_info/retired', koaBody, async ctx => {
 
 //show clearance form
 router.get('/update_teacher_info/posting_history/:id', async ctx => {
-    ctx.body=ctx.params.id
+    ctx.body = ctx.params.id
     // ctx.render('posting_history', {id: ctx.params.id})
 })
 //clear a teacher
@@ -455,7 +489,7 @@ router.post('/update_teacher_info/posting_history', koaBody, async ctx => {
 //display form to mark teacher as dead
 router.get('/update_teacher_info/dead/:id', async ctx => {
     // ctx.render('dead', {id: ctx.params.id})
-    ctx.body=ctx.params.id
+    ctx.body = ctx.params.id
 })
 //process form to mark teacher as dead
 router.post('/update_teacher_info/dead/', koaBody, async ctx => {
@@ -467,7 +501,7 @@ router.post('/update_teacher_info/dead/', koaBody, async ctx => {
 
 //show student clearance form
 router.get('/update_student_info/clearance/:id', async ctx => {
-    ctx.body=ctx.params.id
+    ctx.body = ctx.params.id
     // ctx.render('clear_student', {id: ctx.params.id})
 })
 //process student clearance form
@@ -490,13 +524,8 @@ router.post('/update_student_info/clearance', koaBody, async ctx => {
 //use middleware
 app.use(cors())
 // app.use(serve({rootDir: './public', path: 'public'}))
-app.use(session(CONFIG, app))
-pug.use(app)
 app.use(router.routes())
 app.listen(3002, () => {
     console.log("Server running on port 3002")
 })
 
-/**
- * TODO reroute all urls to Front end
- **/

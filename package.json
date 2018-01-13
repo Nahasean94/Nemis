@@ -9,6 +9,8 @@
   "author": "Sean",
   "license": "ISC",
   "dependencies": {
+    "bcrypt": "^1.0.3",
+    "jsonwebtoken": "^8.1.0",
     "koa": "^2.3.0",
     "koa-body": "^2.5.0",
     "koa-pug": "^3.0.0-2",
