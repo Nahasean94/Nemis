@@ -46,7 +46,7 @@ const StudentSchema = new Schema({
             type: Date
         },
         previous_school: [{
-            school_upi:String ,
+            school_upi: String,
             reporting_date: {
                 type: Date
             },
@@ -70,7 +70,7 @@ const TeacherSchema = new Schema({
         type: String,
         required: [true, 'First name is required']
     },
-    second_name: String,
+    last_name: String,
     birthdate: {
         type: Date,
         required: [true, 'Date of birth is required']
@@ -80,7 +80,7 @@ const TeacherSchema = new Schema({
         required: [true, 'Gender is required'],
         enum: ['male', 'female', 'other']
     },
-    nationalID:Number,
+    nationalID: Number,
     contact: {
         email: {
             type: String,
@@ -90,12 +90,12 @@ const TeacherSchema = new Schema({
         address: String
     },
     posting_history: {
-        current_school: {type:String},
+        current_school: {type: String},
         reporting_date: {
             type: Date
         },
         previous_school: [{
-            school_id: {type: Schema.Types.ObjectId, ref: 'School'},
+            school_upi: String,
             reporting_date: {
                 type: Date
             },
@@ -108,9 +108,9 @@ const TeacherSchema = new Schema({
         name: String
     },
     //TODO store previous responsibilities
-    responsibilities: {
+    responsibilities: [{
         name: {
-            type: String
+            type: String,
         },
         date_assigned: {
             type: Date
@@ -118,10 +118,10 @@ const TeacherSchema = new Schema({
         date_relieved: {
             type: Date
         }
-    },
+    }],
     life: {
         type: String,
-        enum: ['working', 'retired', 'dead'],
+        enum: ['working', 'retired', 'deceased'],
         default: 'working'
     }
 })
@@ -136,8 +136,8 @@ const SchoolSchema = new Schema({
         required: [true, "Name of the school is required"]
     },
     county: {
-        type:String,
-        default:''
+        type: String,
+        default: ''
     },
     category: {
         type: String,
@@ -187,18 +187,18 @@ const SchoolSchema = new Schema({
         email: {
             type: String,
             set: setEmail,
-            default:''
+            default: ''
         },
-        phone1:{
-            type:Number,
-            default:0
-        } ,
+        phone1: {
+            type: Number,
+            default: 0
+        },
         phone2: {
-            type:Number,
-            default:0
+            type: Number,
+            default: 0
         },
         address: {
-            type:String,
+            type: String,
             default: ''
         }
     }
@@ -215,6 +215,10 @@ const MinistrySchema = new Schema({
 })
 const DeceasedSchema = new Schema({
     teacher_id: {
+        type: Schema.Types.ObjectId,
+        ref: 'Teacher'
+    },
+    tsc: {
         type: String,
         unique: true,
         required: [true, 'UPI is required']
@@ -222,24 +226,42 @@ const DeceasedSchema = new Schema({
     timestamp: {
         type: Date,
     },
-    date_of_death: Date,
+    date_of_death: {
+        type: Date,
+        required: [true, "When did the teacher retire?"]
+    },
     cause_of_death: String,
-    death_certificate: String
+    death_certificate: String,
+    school_upi: {
+        type: String,
+        required: [true, 'Last school the teacher taught']
+    }
 })
 const RetiredSchema = new Schema({
     teacher_id: {
         type: Schema.Types.ObjectId,
         ref: 'Teacher',
+    },
+    tsc: {
+        type: String,
         unique: true,
-        required: [true, 'Teacher id is required']
+        required: [true, 'TSC Number is required']
     },
     timestamp: {
         type: Date,
+    },
+    date_retired: {
+        type: Date,
+        required: [true, "When did the teacher retire?"]
+    },
+    school_upi: {
+        type: String,
+        required: [true, 'Last school the teacher taught']
     }
 })
 const SchoolAdminSchema = new Schema({
     school_upi: {
-       type:String,
+        type: String,
         required: [true, 'UPI is required']
     },
     timestamp:
@@ -259,7 +281,7 @@ const SchoolAdminSchema = new Schema({
         required:
             [true, 'Password is required']
     },
-    role:{type:String,default:'school'}
+    role: {type: String, default: 'school'}
 })
 const AdministratorSchema = new Schema({
     email: {

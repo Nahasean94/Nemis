@@ -49,13 +49,14 @@ const queries = {
             tsc: teacher_info.tsc,
             surname: teacher_info.surname,
             first_name: teacher_info.first_name,
-            second_name: teacher_info.second_name,
+            last_name: teacher_info.last_name,
             birthdate: teacher_info.dob,
             'contact.phone1': teacher_info.telephone,
             'contact.email': teacher_info.email,
             gender: teacher_info.gender,
             nationalID: teacher_info.nationalID,
-            'posting_history.current_school': teacher_info.school_upi
+            'posting_history.current_school': teacher_info.school_upi,
+            'posting_history.reporting_date': teacher_info.admission_date,
         }).save()
     },
     //returns the details of the school with the given id
@@ -86,6 +87,58 @@ const queries = {
                 'contact.phone1': school.phone1 ? school.phone1 : 0,
                 'contact.phone2': school.phone2 ? school.phone2 : 0,
                 'contact.address': school.address ? school.address : ''
+            }
+            , {new: true}).exec()
+    },
+    updateSchoolLearningMaterialsInfo: async function (school) {
+        return await School.findOneAndUpdate({
+                _id: school._id
+            }, {
+                'learning_materials.science_labs': school.science_labs ? school.science_labs : 0,
+                'learning_materials.book_ratio': school.book_ratio ? school.book_ratio : '',
+            }
+            , {new: true}).exec()
+    },
+    updateSchoolContactInfo: async function (school) {
+        return await School.findOneAndUpdate({
+                _id: school._id
+            }, {
+                'contact.email': school.email ? school.email : '',
+                'contact.phone1': school.phone1 ? school.phone1 : 0,
+                'contact.phone2': school.phone2 ? school.phone2 : 0,
+                'contact.address': school.address ? school.address : ''
+            }
+            , {new: true}).exec()
+    },
+    updateSchoolAssetsInfo: async function (school) {
+        return await School.findOneAndUpdate({
+                _id: school._id
+            }, {
+                'assets.buses': school.buses ? school.buses : 0,
+                // livestock: school.livestock,
+                'assets.farming_land': school.farming_land ? school.farming_land : 0,
+            }
+            , {new: true}).exec()
+    },
+    updateSchoolInfrastructureInfo: async function (school) {
+        return await School.findOneAndUpdate({
+                _id: school._id
+            }, {
+                'infrastructure.classes': school.classes ? school.classes : 0,
+                'infrastructure.playing_fields': school.playing_fields ? school.playing_fields : 0,
+                'infrastructure.halls': school.halls ? school.halls : 0,
+                'infrastructure.dormitories': school.dormitories ? school.dormitories : 0,
+
+            }
+            , {new: true}).exec()
+    },
+    updateSchoolBasicInfo: async function (school) {
+        return await School.findOneAndUpdate({
+                _id: school._id
+            }, {
+                name: school.name,
+                county: school.county,
+                category: school.category,
             }
             , {new: true}).exec()
     },
@@ -131,12 +184,12 @@ const queries = {
     saveSchoolAdminDetails: async function (admin) {
 
         //fetch the id of the school matching the upi
-            return new SchoolAdmin({
-                school_upi: admin.school_upi,
-                username: admin.username,
-                password: admin.password,
-                date: new Date()
-            }).save()
+        return new SchoolAdmin({
+            school_upi: admin.school_upi,
+            username: admin.username,
+            password: admin.password,
+            date: new Date()
+        }).save()
     },
 //Generate a random 2 character string to be used to create the UPI
     randomString: function (len, charSet) {
@@ -173,6 +226,13 @@ const queries = {
     fetchAllTeachers: function () {
         return Teacher.find().exec()
     },
+    //fetch all retired teachers
+    fetchAllRetiredTeachers: function () {
+        return Retired.find().populate('teacher_id').exec()
+    },
+    fetchAllDeceasedTeachers: function () {
+        return Deceased.find().populate('teacher_id').exec()
+    },
     //fetch all schools
     fetchAllSchools: function () {
         return School.find()
@@ -201,9 +261,16 @@ const queries = {
                 birthdate: teacher.birthdate,
                 nationalID: teacher.nationalID,
                 gender: teacher.gender,
+            }, {new: true}
+        ).exec()
+    },
+    updateTeacherContact: async function (teacher) {
+        return await Teacher.findOneAndUpdate({
+                _id: teacher._id
+            }, {
                 'contact.email': teacher.email,
                 'contact.phone1': teacher.phone1
-            },{new:true}
+            }, {new: true}
         ).exec()
     },
     //update school details
@@ -219,7 +286,7 @@ const queries = {
                 //TODO valid that school must be present
                 // current_school: ,
                 // 'transfers.reporting_date': student.reporting_date
-            },{new:true}
+            }, {new: true}
         ).exec()
     },
     updateSchoolAdmin: async function (schoolAdmin) {
@@ -232,7 +299,7 @@ const queries = {
                 //TODO valid that school must be present
                 // current_school: ,
                 // 'transfers.reporting_date': student.reporting_date
-            },{new:true}
+            }, {new: true}
         ).exec()
     },
     //find a school with a given upi
@@ -259,53 +326,98 @@ const queries = {
 //query teachers of a given school from the database
     fetchSchoolTeachers: async function (upi) {
         return await Teacher.find({
-            "posting_history.current_school": upi
+            "posting_history.current_school": upi,
+            life:"working"
         }).exec()
+    },
+//query teachers of a given school from the database
+    fetchRetiredSchoolTeachers: async function (upi) {
+        return await Retired.find({
+            school_upi: upi
+        }).populate('teacher_id').exec()
+    },
+//query teachers of a given school from the database
+    fetchDeceasedSchoolTeachers: async function (upi) {
+        return await Deceased.find({
+            school_upi: upi
+        }).populate("teacher_id").exec()
     },
 
 //update the db for retired teacher
     markTeacherRetired: async function (teacher) {
         return await Teacher.findOneAndUpdate({_id: teacher.teacher_id}, {
-            life: teacher.retired
-        }).exec().then(async function (retired_teacher) {
-
-            await new Retired({
-                teacher_id: retired_teacher._id,
-                date: teacher.date
+            life: 'retired',
+            posting_history: {
+                current_school: null,
+                reporting_date: null
+            }
+        }).exec().then(async function (teacher_) {
+            await Teacher.findByIdAndUpdate({_id: teacher_._id}, {
+                $push: {
+                    'posting_history.previous_school': {
+                        school_upi: teacher_.posting_history.current_school,
+                        reporting_date: teacher_.posting_history.reporting_date,
+                        clearance_date: teacher.date_retired,
+                    }
+                }
+            }, {new: true}).exec()
+            return await new Retired({
+                teacher_id: teacher.teacher_id,
+                tsc: teacher.tsc,
+                date_retired: teacher.date_retired,
+                school_upi: teacher.school_upi,
+                timestamp: teacher.timestamp
             }).save()
         })
     },
 
 //update the database about clearance of teacher
-    clearTeacher: async function (ctx, teacher) {
-        return await Teacher.findOne({_id: teacher.teacher_id}).select('posting_history').exec().then(async function (teacher_) {
-            await Teacher.findByIdAndUpdate({_id: teacher.teacher_id}, {
+    clearTeacher: async function (teacher) {
+        return await Teacher.findOne({_id: teacher.teacher_id}).select('posting_history').exec().then(async function (new_teacher_) {
+            return await Teacher.findByIdAndUpdate({_id: teacher.teacher_id}, {
                 posting_history: {
                     current_school: null,
                     reporting_date: null
                 }
             }).exec().then(async function (cleared_teacher) {
-                await Teacher.findByIdAndUpdate({_id: cleared_teacher._id}, {
+                return await Teacher.findByIdAndUpdate({_id: cleared_teacher._id}, {
                     $push: {
                         'posting_history.previous_school': {
-                            school_id: teacher_.posting_history.current_school,
-                            reporting_date: teacher_.posting_history.reporting_date,
-                            clearance_date: teacher.date
+                            school_upi: new_teacher_.posting_history.current_school,
+                            reporting_date: new_teacher_.posting_history.reporting_date,
+                            clearance_date: teacher.date_cleared
                         }
                     }
-                }).exec()
+                }, {new: true}).exec()
             })
         })
     },
-    //mark teacher as dead in the database
-    markTeacherDead: async function (teacher) {
+    //mark teacher as deceased in the database
+    markTeacherDeceased: async function (teacher) {
         return await Teacher.findByIdAndUpdate({_id: teacher.teacher_id}, {
-            life: 'dead'
+            life: 'deceased',
+            posting_history: {
+                current_school: null,
+                reporting_date: null
+            }
         }).exec().then(async function (teacher_) {
-            await new Deceased({
+            await Teacher.findByIdAndUpdate({_id: teacher_._id}, {
+                $push: {
+                    'posting_history.previous_school': {
+                        school_upi: teacher_.posting_history.current_school,
+                        reporting_date: teacher_.posting_history.reporting_date,
+                        clearance_date: teacher.date_deceased,
+                    }
+                }
+            }, {new: true}).exec()
+            return await new Deceased({
                 teacher_id: teacher.teacher_id,
-                date_of_death: teacher.date,
-                cause_of_death: teacher.cause
+                tsc: teacher.tsc,
+                timestamp: teacher.timestamp,
+                date_of_death: teacher.date_deceased,
+                cause_of_death: teacher.cause ? teacher.cause : 'Unknown',
+                death_certificate: teacher.death_certificate ? teacher.death_certificate : 'N/A',
+                school_upi: teacher.school_upi
             }).save()
         })
     },
@@ -335,7 +447,41 @@ const queries = {
     },
     findSchoolAdminById: async function (id) {
         return await SchoolAdmin.findById(id).select('_id username').exec()
-    }
+    },
+    addResponsibility: async function (responsibility) {
+        return await Teacher.findByIdAndUpdate({_id: responsibility.teacher_id}, {
+            $push: {
+                responsibilities: {
+                    name: responsibility.responsibility,
+                    date_assigned: responsibility.date_assigned
+                }
+            }
+        }, {new: true}).select('responsibilities').sort({date_assigned: '-1'}).exec()
+    },
+    fetchResponsibilities: async function (teacher_id) {
+        return await Teacher.findById(teacher_id).select('responsibilities').sort('responsibilities.date_assigned -1').exec()
+    },
+    updateResponsibility: async function (responsibility) {
+        return await Teacher.findOneAndUpdate({
+            _id: responsibility.teacher_id,
+            'responsibilities._id': responsibility.editedResponsibilityId
+        }, {
+            '$set': {
+                'responsibilities.$.name': responsibility.responsibility,
+                'responsibilities.$.date_assigned': responsibility.date_assigned
+            }
+        }, {new: true}).exec()
+    },
+    relieveResponsibility: async function (responsibility) {
+        return await Teacher.findOneAndUpdate({
+            _id: responsibility.teacher_id,
+            'responsibilities._id': responsibility.relievedResponsibilityId
+        }, {
+            '$set': {
+                'responsibilities.$.date_relieved': responsibility.date_relieved
+            }
+        }, {new: true}).exec()
+    },
 
 
 }

@@ -33,7 +33,7 @@ const app = new Koa()
 
 //handle searching of upis to display student results
 router.post('/search', koaBody, async ctx => {
-    const upi=ctx.request.body.upi
+    const upi = ctx.request.body.upi
     await queries.searchUPI(upi).then(async function (results) {
         ctx.body = results
     }).catch(function (err) {
@@ -185,9 +185,54 @@ router.get('/schools/update_school_info/:id', async ctx => {
     })
 })
 //update school_info details in the database
-router.post('/update_school_info', koaBody, async ctx => {
+router.post('/update_school_info/', koaBody, async ctx => {
     const school_info = ctx.request.body
     await queries.updateSchoolDetails(school_info).then(async function (school) {
+        ctx.body = school
+    }).catch(function (err) {
+        ctx.status = 500
+        ctx.body = err
+    })
+})
+router.post('/update_school_info/basic', koaBody, async ctx => {
+    const school_info = ctx.request.body
+    await queries.updateSchoolBasicInfo(school_info).then(async function (school) {
+        ctx.body = school
+    }).catch(function (err) {
+        ctx.status = 500
+        ctx.body = err
+    })
+})
+router.post('/update_school_info/infrastructure', koaBody, async ctx => {
+    const school_info = ctx.request.body
+    await queries.updateSchoolInfrastructureInfo(school_info).then(async function (school) {
+        ctx.body = school
+    }).catch(function (err) {
+        ctx.status = 500
+        ctx.body = err
+    })
+})
+router.post('/update_school_info/assets', koaBody, async ctx => {
+    const school_info = ctx.request.body
+    await queries.updateSchoolAssetsInfo(school_info).then(async function (school) {
+        ctx.body = school
+    }).catch(function (err) {
+        ctx.status = 500
+        ctx.body = err
+    })
+})
+router.post('/update_school_info/contact', koaBody, async ctx => {
+    const school_info = ctx.request.body
+    await queries.updateSchoolContactInfo(school_info).then(async function (school) {
+        ctx.body = school
+    }).catch(function (err) {
+        ctx.status = 500
+        ctx.body = err
+    })
+})
+router.post('/update_school_info/learning_materials', koaBody, async ctx => {
+    const school_info = ctx.request.body
+    await queries.updateSchoolLearningMaterialsInfo(school_info).then(async function (school) {
         ctx.body = school
     }).catch(function (err) {
         ctx.status = 500
@@ -298,6 +343,16 @@ router.get('/admin/teachers', async ctx => {
     // ctx.render('teachers', {teachers: await Teacher.find().select('id surname first_name')})
     ctx.body = await queries.fetchAllTeachers()
 })
+//get teachers
+router.get('/admin/teachers/retired', async ctx => {
+    // ctx.render('teachers', {teachers: await Teacher.find().select('id surname first_name')})
+    ctx.body = await queries.fetchAllRetiredTeachers()
+})
+//get teachers
+router.get('/admin/teachers/deceased', async ctx => {
+    // ctx.render('teachers', {teachers: await Teacher.find().select('id surname first_name')})
+    ctx.body = await queries.fetchAllDeceasedTeachers()
+})
 //get schools
 router.get('/admin/schools', async ctx => {
     await queries.fetchAllSchools().then(function (schools) {
@@ -357,9 +412,18 @@ router.get('/update_teacher_info/:id', async ctx => {
 })
 
 //register new student details in the database
-router.post('/update_teacher_info', koaBody, async ctx => {
+router.post('/update_teacher_info/basic', koaBody, async ctx => {
     const teacher_info = ctx.request.body
     await queries.updateTeacherDetails(teacher_info).then(function (teacher) {
+        ctx.body = teacher
+    }).catch(function (err) {
+        ctx.status = 500
+        ctx.body = {errors: err}
+    })
+})
+router.post('/update_teacher_info/contact', koaBody, async ctx => {
+    const teacher_info = ctx.request.body
+    await queries.updateTeacherContact(teacher_info).then(function (teacher) {
         ctx.body = teacher
     }).catch(function (err) {
         ctx.status = 500
@@ -458,6 +522,26 @@ router.post('/schools/teachers', koaBody, authenticateSchoolAdmin, async ctx => 
         ctx.body = {errors: err}
     })
 })
+router.post('/schools/teachers/retired', koaBody, authenticateSchoolAdmin, async ctx => {
+    const upi = ctx.request.body.upi
+    await queries.fetchRetiredSchoolTeachers(upi).then(function (teachers) {
+
+        ctx.body = teachers
+    }).catch(function (err) {
+        ctx.status = 500
+        ctx.body = {errors: err}
+    })
+})
+router.post('/schools/teachers/deceased', koaBody, authenticateSchoolAdmin, async ctx => {
+    const upi = ctx.request.body.upi
+    await queries.fetchDeceasedSchoolTeachers(upi).then(function (teachers) {
+        ctx.body = teachers
+
+    }).catch(function (err) {
+        ctx.status = 500
+        ctx.body = {errors: err}
+    })
+})
 
 
 //mark the teacher as retired
@@ -466,9 +550,12 @@ router.get('/update_teacher_info/retired/:id', async ctx => {
     // ctx.render('retired', {teacher: ctx.params.id})
 })
 //handle retired information from the form
-router.post('/update_teacher_info/retired', koaBody, async ctx => {
+router.post('/update_teacher_info/retire', koaBody, async ctx => {
     await queries.markTeacherRetired(ctx.request.body).then(function (retired) {
-        ctx.redirect(`/schools/teachers/${ctx.session.school_id}`)
+        ctx.body = retired
+    }).catch(function (err) {
+        ctx.status = 500
+        ctx.body = {errors: err}
     })
 })
 
@@ -486,15 +573,19 @@ router.post('/update_teacher_info/posting_history', koaBody, async ctx => {
 })
 
 
-//display form to mark teacher as dead
-router.get('/update_teacher_info/dead/:id', async ctx => {
-    // ctx.render('dead', {id: ctx.params.id})
+//display form to mark teacher as deceased
+router.get('/update_teacher_info/deceased/:id', async ctx => {
+    // ctx.render('deceased', {id: ctx.params.id})
     ctx.body = ctx.params.id
 })
-//process form to mark teacher as dead
-router.post('/update_teacher_info/dead/', koaBody, async ctx => {
-    await queries.markTeacherDead(ctx.request.body).then(function (dead) {
-        ctx.body = "marked as dead"
+//process form to mark teacher as deceased
+router.post('/update_teacher_info/deceased/', koaBody, async ctx => {
+    await queries.markTeacherDeceased(ctx.request.body).then(function (deceased) {
+        ctx.body = deceased
+    }).catch(function (err) {
+        console.log(err)
+        ctx.status = 500
+        ctx.body = {errors: err}
     })
 })
 
@@ -517,6 +608,55 @@ router.post('/update_student_info/clearance', koaBody, async ctx => {
 
     }).catch(function (required) {
         ctx.body = `The following fields are required: ${required}`
+    })
+})
+router.post('/update_teacher_info/responsibilities/add', koaBody, async ctx => {
+    const responsibility = ctx.request.body.responsibility
+    await queries.addResponsibility(responsibility).then(function (teacher) {
+        ctx.body = teacher
+
+    }).catch(function (err) {
+        ctx.status = 500
+        ctx.body = {errors: err}
+    })
+})
+router.post('/update_teacher_info/responsibilities/update', koaBody, async ctx => {
+    const responsibility = ctx.request.body.responsibility
+    await queries.updateResponsibility(responsibility).then(function (teacher) {
+        ctx.body = teacher
+
+    }).catch(function (err) {
+        ctx.status = 500
+        ctx.body = {errors: err}
+    })
+})
+router.post('/update_teacher_info/responsibilities/relieve', koaBody, async ctx => {
+    const responsibility = ctx.request.body.responsibility
+    await queries.relieveResponsibility(responsibility).then(function (teacher) {
+        ctx.body = teacher
+
+    }).catch(function (err) {
+        ctx.status = 500
+        ctx.body = {errors: err}
+    })
+})
+router.post('/update_teacher_info/clear', koaBody, async ctx => {
+    const teacher = ctx.request.body.teacher
+    await queries.clearTeacher(teacher).then(function (teacher) {
+        ctx.body = teacher
+
+    }).catch(function (err) {
+        ctx.status = 500
+        ctx.body = {errors: err}
+    })
+})
+router.post('/teachers/responsibilities', koaBody, async ctx => {
+    const teacher_id = ctx.request.body.teacher_id
+    await queries.fetchResponsibilities(teacher_id).then(function (responsibilities) {
+        ctx.body = responsibilities
+    }).catch(function (err) {
+        ctx.status = 500
+        ctx.body = {errors: err}
     })
 })
 
