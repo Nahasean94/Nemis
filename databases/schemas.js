@@ -35,7 +35,8 @@ const StudentSchema = new Schema({
             type: String,
             enum: ['KCPE', 'KCSE', 'Degree'],
         },
-        path: String
+        path: String,
+        timestamp:Date
     }],
     year:{
         type:Number,
@@ -205,6 +206,10 @@ const SchoolSchema = new Schema({
             type: String,
             default: ''
         }
+    },
+    history:{
+        history:String,
+        timestamp:Date
     }
 })
 
@@ -320,7 +325,11 @@ const KnecAdminSchema=new Schema({
         type:String,
         required:[true,"Password is required"]
     },
-    timestamp:Date
+    timestamp:Date,
+    role:{
+        type:String,
+        default:'knec'
+    }
 })
 
 function setEmail(email) {

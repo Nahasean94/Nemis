@@ -17,7 +17,7 @@ const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
 const {Administrator} = require('./databases/schemas')
 // const mongoose = require('mongoose')
-const {systemAdminSecret, schoolAdminSecret,knecAdminSecret} = require('./config')
+const {systemAdminSecret, schoolAdminSecret, knecAdminSecret} = require('./config')
 const {authenticateSystemAdmin, authenticateSchoolAdmin} = require('./middleware/authenticate')
 //Connect to Mongodb
 //TODO add username and password
@@ -376,10 +376,10 @@ router.get('/admin/school_admins', async ctx => {
 router.get('/admin/knec_admin', async ctx => {
     await queries.getKnecAdmin().then(function (knecAdmin) {
         console.log(knecAdmin)
-    ctx.body = knecAdmin
+        ctx.body = knecAdmin
     }).catch(function (err) {
-        ctx.status=500
-        ctx.body=err
+        ctx.status = 500
+        ctx.body = err
     })
 })
 //register knec Admin
@@ -689,44 +689,98 @@ router.post('/teachers/responsibilities', koaBody, async ctx => {
     })
 })
 //knec admin login
-router.post('/knec_admin_login',koaBody,async ctx=>{
-await queries.knecAdminLogin(ctx.request.body).then(function (knecAdmin) {
-    ctx.body={
-        token: jwt.sign({
-            id: knecAdmin._id,
-            email: knecAdmin.email,
-        }, systemAdminSecret)
-    }
-}).catch(function (err) {
-    ctx.status=500
-    ctx.body=err
-})
+router.post('/knec_admin_login', koaBody, async ctx => {
+    await queries.knecAdminLogin(ctx.request.body).then(function (knecAdmin) {
+        ctx.body = {
+            token: jwt.sign({
+                id: knecAdmin._id,
+                email: knecAdmin.email,
+                role: knecAdmin.role
+            }, systemAdminSecret)
+        }
+    }).catch(function (err) {
+        ctx.status = 500
+        ctx.body = err
+    })
 })
 //knec admin login
-router.post('/schools/category',koaBody,async ctx=>{
-await queries.getSchoolCategory(ctx.request.body.upi).then(function (category) {
-    ctx.body=category
-
-}).catch(function (err) {
-    ctx.status=500
-    ctx.body=err
-})
-})
-    //get candidates
-router.post('/schools/candidates',koaBody,async ctx=>{
-    await queries.getSchoolCandidates(ctx.request.body.upi).then(function (students) {
-        ctx.body=students
+router.post('/schools/category', koaBody, async ctx => {
+    await queries.getSchoolCategory(ctx.request.body.upi).then(function (category) {
+        ctx.body = category
 
     }).catch(function (err) {
-        ctx.status=500
-        ctx.body=err
+        ctx.status = 500
+        ctx.body = err
     })
+})
+//get candidates
+router.post('/schools/candidates', koaBody, async ctx => {
+    await queries.getSchoolCandidates(ctx.request.body.upi).then(function (students) {
+        ctx.body = students
 
+    }).catch(function (err) {
+        ctx.status = 500
+        ctx.body = err
+    })
+})
+router.post('/students/certificates/add', koaBody, async ctx => {
+    const cert = ctx.request.body
+    const absolutePath = cert.files.upload.path
+    const arraypath = absolutePath.split('\\')
+    const filepath = `${arraypath[arraypath.length - 1]}`
+    const certificate = {
+        path: filepath,
+        cert: cert.fields.category,
+        student_id: cert.fields.student_id
+    }
+    await queries.uploadStudentCertificate(certificate).then(function (student) {
+        ctx.body = student
+    }).catch(function (err) {
+        ctx.status = 500
+        ctx.body = err
+    })
+})
+router.post('/students/certificates', koaBody, async ctx => {
+        await queries.getStudentCertificates(ctx.request.body).then(function (certificates) {
+
+            ctx.body = certificates
+        }).catch(function (err) {
+            ctx.status = 500
+            ctx.body = err
+        })
+    }
+)
+//add school history
+router.post('/schools/history/add', koaBody, async ctx => {
+    await queries.addSchoolHistory(ctx.request.body).then(function (school) {
+        ctx.body = school
+    }).catch(function (err) {
+        ctx.status = 500
+        ctx.body = err
+    })
+})
+//add school history
+router.post('/schools/history', koaBody, async ctx => {
+    await queries.getSchoolHistory(ctx.request.body).then(function (school) {
+        ctx.body = school
+    }).catch(function (err) {
+        ctx.status = 500
+        ctx.body = err
+    })
+})
+//update school history
+router.post('/schools/history/update', koaBody, async ctx => {
+    await queries.updateSchoolHistory(ctx.request.body).then(function (school) {
+        ctx.body = school
+    }).catch(function (err) {
+        ctx.status = 500
+        ctx.body = err
+    })
 })
 //use middleware
 app.use(cors())
-// app.use(serve({rootDir: './public', path: 'public'}))
 app.use(router.routes())
+app.use(serve({rootDir: 'public', path: '/public'}))
 app.listen(3002, () => {
     console.log("Server running on port 3002")
 })

@@ -516,19 +516,57 @@ const queries = {
     getSchoolCandidates: function (school) {
         return School.findOne({
             upi: school,
-        }).select('category').exec().then(async function (school) {
+        }).select('category upi').exec().then(async function (school) {
             if (school.category === 'secondary') {
                 return await Student.find({
-                    school_upi: school.upi,
+                    'transfers.current_school': school.upi,
                     year: 4
                 }).exec()
             } else if (school.category === 'primary') {
                 return await Student.find({
-                    upi: school.upi,
+                    'transfers.current_school': school.upi,
                     year: 8
                 }).exec()
             }
         })
+    },
+    uploadStudentCertificate: async function (cert) {
+        return await Student.findOneAndUpdate({
+            _id: cert.student_id
+        }, {
+            $push: {
+                performance: {
+                    type: cert.cert,
+                    path: cert.path,
+                    timestamp: new Date()
+                }
+            }
+        }, {new: true}).exec()
+    },
+    getStudentCertificates: async function (student) {
+        return await Student.findOne({
+            _id: student.student_id
+        }).select('performance').exec()
+    },
+    addSchoolHistory: async function (history) {
+        return await School.findOneAndUpdate({
+            upi:history.school_upi
+        }, {
+            history: history.history,
+            timestamp: new Date()
+        },{new:true}).select('performance').exec()
+    },
+    updateSchoolHistory: async function (history) {
+        return await School.findOneAndUpdate({
+            upi:history.school_upi
+        }, {
+            history: history.history,
+        },{new:true}).select('performance').exec()
+    },
+    getSchoolHistory: async function (school) {
+        return await School.findOne({
+            upi: school.upi
+        }).select('history').exec()
     }
 }
 module.exports = queries
