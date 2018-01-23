@@ -37,6 +37,10 @@ const StudentSchema = new Schema({
         },
         path: String
     }],
+    year:{
+        type:Number,
+        required:[true,"Year of study is a required field"]
+    },
     transfers: {
         current_school: {
             type: String,
@@ -306,6 +310,18 @@ const AdministratorSchema = new Schema({
         type: Date,
     }
 })
+const KnecAdminSchema=new Schema({
+    email:{
+        type:String,
+        unique:true,
+        required:[true,'Email is a required field']
+    },
+    password:{
+        type:String,
+        required:[true,"Password is required"]
+    },
+    timestamp:Date
+})
 
 function setEmail(email) {
     return email.toLowerCase()
@@ -319,6 +335,7 @@ const Deceased = mongoose.model('Deceased', DeceasedSchema)
 const Retired = mongoose.model('Retired', RetiredSchema)
 const SchoolAdmin = mongoose.model('SchoolAdmin', SchoolAdminSchema)
 const Administrator = mongoose.model('Administrator', AdministratorSchema)
+const KnecAdmin = mongoose.model('KnecAdmin', KnecAdminSchema)
 
 
-module.exports = {Student, Teacher, School, Ministry, Deceased, Retired, SchoolAdmin, Administrator}
+module.exports = {Student, Teacher, School, Ministry, Deceased, Retired, SchoolAdmin, Administrator,KnecAdmin}

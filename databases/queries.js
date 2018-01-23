@@ -1,5 +1,5 @@
 "use strict"
-const {Student, Teacher, School, Ministry, Deceased, Retired, SchoolAdmin, Administrator} = require('./schemas')
+const {Student, Teacher, School, Ministry, Deceased, Retired, SchoolAdmin, Administrator, KnecAdmin} = require('./schemas')
 const mongoose = require('mongoose')
 const bcrypt = require('bcrypt')
 //Connect to Mongodb
@@ -36,6 +36,7 @@ const queries = {
             last_name: student.last_name,
             birthdate: student.dob,
             gender: student.gender,
+            year: student.year,
             'transfers.current_school': student.school_upi
         }).save().catch(err => {
             if ((err.message).split(' ')[0] === 'E11000') {
@@ -327,7 +328,7 @@ const queries = {
     fetchSchoolTeachers: async function (upi) {
         return await Teacher.find({
             "posting_history.current_school": upi,
-            life:"working"
+            life: "working"
         }).exec()
     },
 //query teachers of a given school from the database
@@ -483,6 +484,51 @@ const queries = {
         }, {new: true}).exec()
     },
 
-
+    getKnecAdmin: async function () {
+        return await KnecAdmin.findOne().exec()
+    },
+    registerKnecAdmin: async function (knecAdmin) {
+        return new KnecAdmin({
+            email: knecAdmin.email,
+            password: knecAdmin.password,
+            timestamp: new Date()
+        }).save()
+    },
+    updateKnecAdmin: async function (knecAdmin) {
+        return KnecAdmin.findOneAndUpdate({
+            _id: knecAdmin._id
+        }, {
+            email: knecAdmin.email,
+            password: knecAdmin.password,
+        }, {new: true}).exec()
+    },
+    knecAdminLogin: function (knecAdmin) {
+        return KnecAdmin.findOne({
+            email: knecAdmin.email,
+            password: knecAdmin.password
+        }).exec()
+    },
+    getSchoolCategory: function (school) {
+        return School.findOne({
+            upi: school.upi,
+        }).select('category').exec()
+    },
+    getSchoolCandidates: function (school) {
+        return School.findOne({
+            upi: school,
+        }).select('category').exec().then(async function (school) {
+            if (school.category === 'secondary') {
+                return await Student.find({
+                    school_upi: school.upi,
+                    year: 4
+                }).exec()
+            } else if (school.category === 'primary') {
+                return await Student.find({
+                    upi: school.upi,
+                    year: 8
+                }).exec()
+            }
+        })
+    }
 }
 module.exports = queries

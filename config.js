@@ -1,4 +1,5 @@
 module.exports={
     systemAdminSecret:"Somejsonwebtokensecretforsystemadmin",
-    schoolAdminSecret:"Somejsonwebtokensecretforschooladmin"
+    schoolAdminSecret:"Somejsonwebtokensecretforschooladmin",
+    knecAdminSecret:"Somejsonwebtokensecretforknecadmin"
 }

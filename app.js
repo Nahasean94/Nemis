@@ -17,7 +17,7 @@ const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
 const {Administrator} = require('./databases/schemas')
 // const mongoose = require('mongoose')
-const {systemAdminSecret, schoolAdminSecret} = require('./config')
+const {systemAdminSecret, schoolAdminSecret,knecAdminSecret} = require('./config')
 const {authenticateSystemAdmin, authenticateSchoolAdmin} = require('./middleware/authenticate')
 //Connect to Mongodb
 //TODO add username and password
@@ -354,7 +354,7 @@ router.get('/admin/teachers/deceased', async ctx => {
     ctx.body = await queries.fetchAllDeceasedTeachers()
 })
 //get schools
-router.get('/admin/schools', async ctx => {
+router.get('/schools', async ctx => {
     await queries.fetchAllSchools().then(function (schools) {
         if (schools) {
             ctx.body = schools
@@ -371,6 +371,35 @@ router.get('/admin/schools', async ctx => {
 router.get('/admin/school_admins', async ctx => {
 
     ctx.body = await  queries.fetchAllSchoolAdmins()
+})
+//get school admins
+router.get('/admin/knec_admin', async ctx => {
+    await queries.getKnecAdmin().then(function (knecAdmin) {
+        console.log(knecAdmin)
+    ctx.body = knecAdmin
+    }).catch(function (err) {
+        ctx.status=500
+        ctx.body=err
+    })
+})
+//register knec Admin
+router.post('/admin/knec_admin/register', koaBody, async ctx => {
+    await queries.registerKnecAdmin(ctx.request.body).then(function (knecAdmin) {
+
+        ctx.body = knecAdmin
+    }).catch(function (err) {
+        ctx.status = 500
+        ctx.body = err
+    })
+})
+//register knec Admin
+router.post('/admin/knec_admin/update', koaBody, async ctx => {
+    await queries.updateKnecAdmin(ctx.request.body).then(function (knecAdmin) {
+        ctx.body = knecAdmin
+    }).catch(function (err) {
+        ctx.status = 500
+        ctx.body = err
+    })
 })
 
 //get individual school details
@@ -659,8 +688,41 @@ router.post('/teachers/responsibilities', koaBody, async ctx => {
         ctx.body = {errors: err}
     })
 })
+//knec admin login
+router.post('/knec_admin_login',koaBody,async ctx=>{
+await queries.knecAdminLogin(ctx.request.body).then(function (knecAdmin) {
+    ctx.body={
+        token: jwt.sign({
+            id: knecAdmin._id,
+            email: knecAdmin.email,
+        }, systemAdminSecret)
+    }
+}).catch(function (err) {
+    ctx.status=500
+    ctx.body=err
+})
+})
+//knec admin login
+router.post('/schools/category',koaBody,async ctx=>{
+await queries.getSchoolCategory(ctx.request.body.upi).then(function (category) {
+    ctx.body=category
 
+}).catch(function (err) {
+    ctx.status=500
+    ctx.body=err
+})
+})
+    //get candidates
+router.post('/schools/candidates',koaBody,async ctx=>{
+    await queries.getSchoolCandidates(ctx.request.body.upi).then(function (students) {
+        ctx.body=students
 
+    }).catch(function (err) {
+        ctx.status=500
+        ctx.body=err
+    })
+
+})
 //use middleware
 app.use(cors())
 // app.use(serve({rootDir: './public', path: 'public'}))
