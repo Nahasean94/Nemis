@@ -1,11 +1,10 @@
 "use strict"
-const {Student, Teacher, School, Policy, Deceased, Retired, SchoolAdmin, Administrator, KnecAdmin} = require('./schemas')
+const {Student, Teacher, School, Policy, Deceased, Retired, SchoolAdmin, Administrator, KnecAdmin, TSC, Dead} = require('./schemas')
 const mongoose = require('mongoose')
 const bcrypt = require('bcrypt')
 //Connect to Mongodb
 //TODO add username and password
 mongoose.connect('mongodb://localhost/nemis', {useMongoClient: true, promiseLibrary: global.Promise})
-
 
 const queries = {
     //search the UPI of the student
@@ -88,6 +87,24 @@ const queries = {
             teaching_subjects: teacher_info.teaching_subjects,
             'posting_history.current_school': teacher_info.school_upi,
             'posting_history.reporting_date': teacher_info.admission_date,
+        }).save()
+    },
+    storeTscDetails: async function (teacher_info) {
+        return await new TSC({
+            tsc: teacher_info.tsc,
+            surname: teacher_info.surname,
+            first_name: teacher_info.first_name,
+            last_name: teacher_info.last_name,
+            birthdate: teacher_info.dob,
+            'contact.phone1': teacher_info.telephone,
+            'contact.email': teacher_info.email,
+            gender: teacher_info.gender,
+            nationalID: teacher_info.nationalID,
+            teaching_subjects: {
+                subject_1: teacher_info.teaching_subject_1,
+                subject_2: teacher_info.teaching_subject_2
+            },
+            'posting_history.reporting_date': teacher_info.employment_date,
         }).save()
     },
     //returns the details of the school with the given id
@@ -353,7 +370,6 @@ const queries = {
             'transfers.current_school': upi
         }).exec()
     },
-
 //query teachers of a given school from the database
     fetchSchoolTeachers: async function (upi) {
         return await Teacher.find({
@@ -385,7 +401,6 @@ const queries = {
             }
         }).exec()
     },
-
 //update the db for retired teacher
     markTeacherRetired: async function (teacher) {
         return await Teacher.findOneAndUpdate({_id: teacher.teacher_id}, {
@@ -413,7 +428,6 @@ const queries = {
             }).save()
         })
     },
-
 //update the database about clearance of teacher
     clearTeacher: async function (teacher) {
         return await Teacher.findOne({_id: teacher.teacher_id}).select('posting_history').exec().then(async function (new_teacher_) {
@@ -526,7 +540,6 @@ const queries = {
             }
         }, {new: true}).exec()
     },
-
     getKnecAdmin: async function () {
         return await KnecAdmin.findOne().exec()
     },
@@ -655,39 +668,57 @@ const queries = {
     uploadPolicyDocument: async function (policy) {
         return await new Policy({
             title: policy.title,
-            path: policy.path
-
+            path: policy.path,
+            timestamp: new Date
         }).save()
     },
     getPolicies: async function () {
         return await Policy.find().exec()
+    },
+    getSchoolPolicies: async function () {
+        return await Policy.find({scope: 'school'}).exec()
+    },
+    getKnecPolicies: async function () {
+        return await Policy.find({scope: 'knec'}).exec()
+    },
+    getPublicPolicies: async function () {
+        return await Policy.find({scope: 'public'}).exec()
     },
     updatePolicy: async function (policy) {
         return await Policy.findOneAndUpdate({
             _id: policy.policy_id
         }, {
             title: policy.title,
-            scope:policy.scope?policy.scope:'unpublished'
+            scope: policy.scope ? policy.scope : 'unpublished'
         }, {new: true}).exec()
     },
     publishPolicy: async function (policy) {
         return await Policy.findOneAndUpdate({
             _id: policy.policy_id
         }, {
-            scope:policy.scope
+            scope: policy.scope
         }, {new: true}).exec()
     },
     unpublishPolicy: async function (policy) {
         return await Policy.findOneAndUpdate({
             _id: policy.policy_id
         }, {
-            scope:'unpublished'
+            scope: 'unpublished'
         }, {new: true}).exec()
     },
     deletePolicy: async function (policy) {
         return await Policy.findOneAndRemove({
             _id: policy._id
         }).exec()
+    },
+    registerDeceased: async function (deceased) {
+        return await new Dead({
+            name: deceased.name,
+            timestamp: new Date(),
+            date_of_death: deceased.dod,
+            cause_of_death: deceased.cod,
+            nationalID: deceased.nationalID
+        }).save()
     }
 }
 module.exports = queries

@@ -220,8 +220,6 @@ router.post('/register_student', koaBody, async ctx => {
     })
 
 })
-
-
 //display teachers registration form
 router.get('/register_teacher', async ctx => {
     ctx.render('register_teacher')
@@ -229,31 +227,26 @@ router.get('/register_teacher', async ctx => {
 //register new student details in the database
 router.post('/register_teacher', koaBody, async ctx => {
     const teacher_info = ctx.request.body
-    // await validation.checkIfNull({
-    //     tsc: teacher_info.tsc,
-    //     surname: teacher_info.surname,
-    //     first_name: teacher_info.first_name,
-    //     second_name: teacher_info.second_name,
-    //     birthdate: teacher_info.dob,
-    //     telephone: teacher_info.telephone,
-    //     email: teacher_info.email,
-    //     gender: teacher_info.gender,
-    //     nationalID: teacher_info.nationalID,
-    //     school_upi: teacher_info.school_upi,
-    // }).then(async function (required) {
+
     await  queries.storeTeacherDetails(teacher_info).then(function (saved) {
         ctx.body = saved
     }).catch(function (err) {
         ctx.status = 500
         ctx.body = {errors: err}
     })
-    // }).catch(function (required) {
-    //         ctx.status=500
-    //     ctx.body ={errors: `The following are required fields: ${required}`}
-    // })
+
 })
+router.post('/tsc/register_teacher', koaBody, async ctx => {
+    const teacher_info = ctx.request.body
 
+    await  queries.storeTscDetails(teacher_info).then(function (saved) {
+        ctx.body = saved
+    }).catch(function (err) {
+        ctx.status = 500
+        ctx.body = {errors: err}
+    })
 
+})
 //display school update_info form
 router.get('/update_school_info/:upi', async ctx => {
     await queries.findSchoolByUpi(ctx.params.upi).then(function (school) {
@@ -322,8 +315,6 @@ router.post('/update_school_info/learning_materials', koaBody, async ctx => {
         ctx.body = err
     })
 })
-
-
 //display ministry of education policy form
 router.get('/moe_policy', async ctx => {
     ctx.render('moe_policy')
@@ -347,8 +338,6 @@ router.post('/moe_policy', koaBody, async ctx => {
         ctx.body = `The following are required fields: ${required}`
     })
 })
-
-
 //process admin registration
 router.post('/register_admin', koaBody, async ctx => {
     const details = ctx.request.body
@@ -371,7 +360,6 @@ router.post('/register_admin', koaBody, async ctx => {
         }
     }
 })
-
 //register school admin
 router.get('/admin/register_school_admin', ctx => {
     ctx.render('register_school_admin')
@@ -399,13 +387,10 @@ router.post('/admin/update_school_admin', authenticateSystemAdmin, koaBody, asyn
         ctx.body = {errors: err}
     })
 })
-
-
 //display school registration form
 router.get('/register_school', ctx => {
     ctx.render('register_school')
 })
-
 //process school registration
 router.post('/register_school', authenticateSystemAdmin, koaBody, async ctx => {
     await queries.storeSchoolDetails(ctx.request.body).then(function (school) {
@@ -415,7 +400,6 @@ router.post('/register_school', authenticateSystemAdmin, koaBody, async ctx => {
         ctx.body = err
     })
 })
-
 //get students
 router.get('/admin/students', async ctx => {
     // ctx.render('students', {students: await Student.find().select('id surname first_name')})
@@ -484,7 +468,6 @@ router.post('/admin/knec_admin/update', koaBody, async ctx => {
         ctx.body = err
     })
 })
-
 //get individual school details
 router.get('/admin/schools/:id', async ctx => {
     await queries.findSchoolDetails().then(function (school) {
@@ -506,7 +489,6 @@ router.get('/students/:id', async ctx => {
         // ctx.render('student_info', {student: student})
     })
 })
-
 //get individual teacher details
 router.get('/teachers/:id', async ctx => {
     await queries.fetchTeacherDetails(ctx.params.id).then(function (teacher) {
@@ -514,7 +496,6 @@ router.get('/teachers/:id', async ctx => {
         ctx.body = teacher
     })
 })
-
 //display teacher registration form
 router.get('/update_teacher_info/:id', async ctx => {
     await queries.fetchTeacherDetails(ctx.params.id).exec().then(function (teacher) {
@@ -522,7 +503,6 @@ router.get('/update_teacher_info/:id', async ctx => {
         ctx.body = teacher
     })
 })
-
 //register new student details in the database
 router.post('/update_teacher_info/basic', koaBody, async ctx => {
     const teacher_info = ctx.request.body
@@ -542,8 +522,6 @@ router.post('/update_teacher_info/contact', koaBody, async ctx => {
         ctx.body = {errors: err}
     })
 })
-
-
 //update student info
 router.get('/update_student_info/:id', async ctx => {
     await queries.fetchTeacherDetails(ctx.params.id).then(function (student) {
@@ -561,8 +539,6 @@ router.post('/update_student_info', koaBody, async ctx => {
         ctx.body = {errors: err}
     })
 })
-
-
 //display school admin login page
 router.get('/schools/:upi', async ctx => {
     //check if the school exists
@@ -584,7 +560,6 @@ router.post('/schools', koaBody, async ctx => {
         ctx.body = err
     })
 })
-
 //handle school admin login credentials
 router.post('/school_admin_login', koaBody, async ctx => {
     await queries.handleSchoolAdminLogin(ctx.request.body).then(function (admin_details) {
@@ -608,8 +583,6 @@ router.post('/school_admin_login', koaBody, async ctx => {
         ctx.body = err
     })
 })
-
-
 //fetch students of a particular school
 router.post('/schools/students', koaBody, async ctx => {
     const upi = ctx.request.body.upi
@@ -621,8 +594,6 @@ router.post('/schools/students', koaBody, async ctx => {
         ctx.body = {errors: err}
     })
 })
-
-
 //fetch all the teachers of a particular school
 router.post('/schools/teachers', koaBody, authenticateSchoolAdmin, async ctx => {
     const upi = ctx.request.body.upi
@@ -654,7 +625,6 @@ router.post('/schools/teachers/deceased', koaBody, authenticateSchoolAdmin, asyn
         ctx.body = {errors: err}
     })
 })
-
 router.post('/schools/teachers/transferred', koaBody, authenticateSchoolAdmin, async ctx => {
     const upi = ctx.request.body.upi
     await queries.fetchTransferredSchoolTeachers(upi).then(function (teachers) {
@@ -665,8 +635,6 @@ router.post('/schools/teachers/transferred', koaBody, authenticateSchoolAdmin, a
         ctx.body = {errors: err}
     })
 })
-
-
 //mark the teacher as retired
 router.get('/update_teacher_info/retired/:id', async ctx => {
     ctx.body = ctx.params.id
@@ -681,8 +649,6 @@ router.post('/update_teacher_info/retire', koaBody, async ctx => {
         ctx.body = {errors: err}
     })
 })
-
-
 //show clearance form
 router.get('/update_teacher_info/posting_history/:id', async ctx => {
     ctx.body = ctx.params.id
@@ -694,8 +660,6 @@ router.post('/update_teacher_info/posting_history', koaBody, async ctx => {
         ctx.body = "teacher cleared"
     })
 })
-
-
 //display form to mark teacher as deceased
 router.get('/update_teacher_info/deceased/:id', async ctx => {
     // ctx.render('deceased', {id: ctx.params.id})
@@ -711,8 +675,6 @@ router.post('/update_teacher_info/deceased/', koaBody, async ctx => {
         ctx.body = {errors: err}
     })
 })
-
-
 //show student clearance form
 router.get('/update_student_info/clearance/:id', async ctx => {
     ctx.body = ctx.params.id
@@ -842,8 +804,7 @@ router.post('/students/certificates', koaBody, async ctx => {
             ctx.status = 500
             ctx.body = err
         })
-    }
-)
+    })
 //add school history
 router.post('/schools/history/add', koaBody, async ctx => {
     await queries.addSchoolHistory(ctx.request.body).then(function (school) {
@@ -952,6 +913,30 @@ router.get('/policies', async ctx => {
         ctx.body = err
     })
 })
+router.get('/policies/public', async ctx => {
+    await queries.getPublicPolicies().then(function (policies) {
+        ctx.body = policies
+    }).catch(function (err) {
+        ctx.status = 500
+        ctx.body = err
+    })
+})
+router.get('/policies/schools', async ctx => {
+    await queries.getSchoolPolicies().then(function (policies) {
+        ctx.body = policies
+    }).catch(function (err) {
+        ctx.status = 500
+        ctx.body = err
+    })
+})
+router.get('/policies/knec', async ctx => {
+    await queries.getKnecPolicies().then(function (policies) {
+        ctx.body = policies
+    }).catch(function (err) {
+        ctx.status = 500
+        ctx.body = err
+    })
+})
 router.post('/admin/policies/update', authenticateSystemAdmin, koaBody, async ctx => {
     await queries.updatePolicy(ctx.request.body).then(function (policy) {
         ctx.body = policy
@@ -985,6 +970,16 @@ router.post('/admin/policies/delete', authenticateSystemAdmin, koaBody, async ct
         ctx.body = err
     })
 })
+router.post('/deceased/register_deceased', koaBody, async ctx => {
+    await queries.registerDeceased(ctx.request.body).then(function (policy) {
+        ctx.body = policy
+    }).catch(function (err) {
+        ctx.status = 500
+        ctx.body = err
+    })
+})
+
+
 //use middleware
 app.use(cors())
 app.use(router.routes())

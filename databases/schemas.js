@@ -112,11 +112,85 @@ const TeacherSchema = new Schema({
             }
         }]
     },
-    nationalID:Number,
-    teaching_subjects: [{
-        name: String
-    }],
+    nationalID: Number,
+    teaching_subjects: {
+        subject_1: String,
+        subject_2: String
+    },
     //TODO store previous responsibilities
+    responsibilities: [{
+        name: {
+            type: String,
+        },
+        date_assigned: {
+            type: Date
+        },
+        date_relieved: {
+            type: Date
+        }
+    }],
+    life: {
+        type: String,
+        enum: ['working', 'retired', 'deceased'],
+        default: 'working'
+    },
+    picture: {
+        path: String,
+        timestamp: Date,
+    }
+})
+const TSCSchema = new Schema({
+    tsc: {
+        type: Number,
+        unique: true,
+        required: [true, 'TSC number is required']
+    },
+    surname: {
+        type: String,
+        required: [true, 'surname is required']
+    },
+    first_name: {
+        type: String,
+        required: [true, 'First name is required']
+    },
+    last_name: String,
+    birthdate: {
+        type: Date,
+        required: [true, 'Date of birth is required']
+    },
+    gender: {
+        type: String,
+        required: [true, 'Gender is required'],
+        enum: ['male', 'female', 'other']
+    },
+    contact: {
+        email: {
+            type: String,
+            set: setEmail,
+        },
+        phone1: Number,
+        address: String
+    },
+    posting_history: {
+        current_school: {type: String},
+        reporting_date: {
+            type: Date
+        },
+        previous_school: [{
+            school_upi: String,
+            reporting_date: {
+                type: Date
+            },
+            clearance_date: {
+                type: Date
+            }
+        }]
+    },
+    nationalID: Number,
+    teaching_subjects: {
+        subject_1: String,
+        subject_2: String
+    },
     responsibilities: [{
         name: {
             type: String,
@@ -225,18 +299,17 @@ const SchoolSchema = new Schema({
         timestamp: Date,
     }]
 })
-
 const PolicySchema = new Schema({
-        title: String,
-        path: String,
-        scope:{
-            type:String,
-            enum:['public','school','knec','unpublished'],
-            default:'unpublished'
-        },
-        timestamp: {
-            type: Date,
-        }
+    title: String,
+    path: String,
+    scope: {
+        type: String,
+        enum: ['public', 'school', 'knec', 'unpublished'],
+        default: 'unpublished'
+    },
+    timestamp: {
+        type: Date,
+    }
 
 })
 const DeceasedSchema = new Schema({
@@ -262,6 +335,22 @@ const DeceasedSchema = new Schema({
         type: String,
         required: [true, 'Last school the teacher taught']
     }
+})
+const DeadSchema = new Schema({
+    name: {
+        type: String,
+        required: [true, 'Name of the deceased is required']
+    },
+    timestamp: {
+        type: Date,
+    },
+    date_of_death: {
+        type: Date,
+        required: [true, "When did the teacher retire?"]
+    },
+    cause_of_death: String,
+    death_certificate: String,
+    nationalID: Number
 })
 const RetiredSchema = new Schema({
     teacher_id: {
@@ -355,13 +444,15 @@ function setEmail(email) {
 
 const Student = mongoose.model('Student', StudentSchema)
 const Teacher = mongoose.model('Teacher', TeacherSchema)
+const TSC = mongoose.model('TSC', TSCSchema)
 const School = mongoose.model('School', SchoolSchema)
 const Policy = mongoose.model('Policy', PolicySchema)
 const Deceased = mongoose.model('Deceased', DeceasedSchema)
+const Dead = mongoose.model('Dead', DeadSchema)
 const Retired = mongoose.model('Retired', RetiredSchema)
 const SchoolAdmin = mongoose.model('SchoolAdmin', SchoolAdminSchema)
 const Administrator = mongoose.model('Administrator', AdministratorSchema)
 const KnecAdmin = mongoose.model('KnecAdmin', KnecAdminSchema)
 
 
-module.exports = {Student, Teacher, School, Policy, Deceased, Retired, SchoolAdmin, Administrator, KnecAdmin}
+module.exports = {Student, Teacher, School, Policy, Deceased, Retired, SchoolAdmin, Administrator, KnecAdmin, TSC,Dead}
