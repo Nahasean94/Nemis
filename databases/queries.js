@@ -1,5 +1,5 @@
 "use strict"
-const {Student, Teacher, School, Ministry, Deceased, Retired, SchoolAdmin, Administrator, KnecAdmin} = require('./schemas')
+const {Student, Teacher, School, Policy, Deceased, Retired, SchoolAdmin, Administrator, KnecAdmin} = require('./schemas')
 const mongoose = require('mongoose')
 const bcrypt = require('bcrypt')
 //Connect to Mongodb
@@ -9,8 +9,38 @@ mongoose.connect('mongodb://localhost/nemis', {useMongoClient: true, promiseLibr
 
 const queries = {
     //search the UPI of the student
-    searchUPI: async function (upi) {
-        return Student.findOne({
+    searchStudentUPI: async function (upi) {
+        return await Student.find({
+            upi: upi
+        }).exec()
+    },
+    searchStudentName: async function (name) {
+        return await Student.find({
+            $or: [{surname: name}, {first_name: name}, {last_name: name}]
+        }).exec()
+    },
+    searchTeacherName: async function (name) {
+        return await Teacher.find({
+            $or: [{surname: name}, {first_name: name}, {last_name: name}]
+        }).exec()
+    },
+    searchTeacherTsc: async function (tsc) {
+        return await Teacher.find({
+            tsc: tsc
+        }).exec()
+    },
+    searchSchoolName: async function (name) {
+        return await School.find({
+            name: name
+        }).exec()
+    },
+    searchSchoolCounty: async function (county) {
+        return await School.find({
+            county: county
+        }).exec()
+    },
+    searchSchoolUPI: async function (upi) {
+        return await School.find({
             upi: upi
         }).exec()
     },
@@ -55,7 +85,7 @@ const queries = {
             'contact.phone1': teacher_info.telephone,
             'contact.email': teacher_info.email,
             gender: teacher_info.gender,
-            nationalID: teacher_info.nationalID,
+            teaching_subjects: teacher_info.teaching_subjects,
             'posting_history.current_school': teacher_info.school_upi,
             'posting_history.reporting_date': teacher_info.admission_date,
         }).save()
@@ -146,7 +176,7 @@ const queries = {
 
 //store new policy
     storePolicies: async function (policy_info) {
-        const ministry = new Ministry({
+        const ministry = new Policy({
             'policy.title': policy_info.title,
             'policy.description': policy_info.description
         })
@@ -343,6 +373,18 @@ const queries = {
             school_upi: upi
         }).populate("teacher_id").exec()
     },
+    fetchTransferredSchoolTeachers: async function (upi) {
+        console.log(upi)
+        return await Teacher.find({
+            'posting_history.previous_school': {
+                $elemMatch: {
+                    school_upi: {
+                        $in: [upi]
+                    }
+                }
+            }
+        }).exec()
+    },
 
 //update the db for retired teacher
     markTeacherRetired: async function (teacher) {
@@ -388,7 +430,8 @@ const queries = {
                             reporting_date: new_teacher_.posting_history.reporting_date,
                             clearance_date: teacher.date_cleared
                         }
-                    }
+                    },
+
                 }, {new: true}).exec()
             })
         })
@@ -550,23 +593,101 @@ const queries = {
     },
     addSchoolHistory: async function (history) {
         return await School.findOneAndUpdate({
-            upi:history.school_upi
+            upi: history.school_upi
         }, {
             history: history.history,
             timestamp: new Date()
-        },{new:true}).select('performance').exec()
+        }, {new: true}).select('performance').exec()
     },
     updateSchoolHistory: async function (history) {
         return await School.findOneAndUpdate({
-            upi:history.school_upi
+            upi: history.school_upi
         }, {
             history: history.history,
-        },{new:true}).select('performance').exec()
+        }, {new: true}).select('performance').exec()
     },
     getSchoolHistory: async function (school) {
         return await School.findOne({
             upi: school.upi
         }).select('history').exec()
+    },
+    relieveDuties: function (upi) {
+
+    },
+    uploadSchoolPhoto: async function (photo) {
+        return await School.findOneAndUpdate({
+            upi: photo.school_upi,
+        }, {
+            $push: {
+                gallery: {
+                    description: photo.description,
+                    path: photo.path,
+                    timestamp: new Date()
+                }
+            }
+        }, {new: true}).exec()
+    },
+    uploadTeacherPhoto: async function (photo) {
+        return await Teacher.findOneAndUpdate({
+            tsc: photo.tsc,
+        }, {
+            picture: {
+                path: photo.path,
+                timestamp: new Date()
+            }
+        }, {new: true}).exec()
+    },
+    uploadStudentPhoto: async function (photo) {
+        return await Student.findOneAndUpdate({
+            upi: photo.upi,
+        }, {
+            picture: {
+                path: photo.path,
+                timestamp: new Date()
+            }
+        }, {new: true}).exec()
+    },
+    getSchoolGallery: async function (school_upi) {
+        return await School.findOne({
+            upi: school_upi.school_upi
+        }).select('gallery').exec()
+    },
+    uploadPolicyDocument: async function (policy) {
+        return await new Policy({
+            title: policy.title,
+            path: policy.path
+
+        }).save()
+    },
+    getPolicies: async function () {
+        return await Policy.find().exec()
+    },
+    updatePolicy: async function (policy) {
+        return await Policy.findOneAndUpdate({
+            _id: policy.policy_id
+        }, {
+            title: policy.title,
+            scope:policy.scope?policy.scope:'unpublished'
+        }, {new: true}).exec()
+    },
+    publishPolicy: async function (policy) {
+        return await Policy.findOneAndUpdate({
+            _id: policy.policy_id
+        }, {
+            scope:policy.scope
+        }, {new: true}).exec()
+    },
+    unpublishPolicy: async function (policy) {
+        return await Policy.findOneAndUpdate({
+            _id: policy.policy_id
+        }, {
+            scope:'unpublished'
+        }, {new: true}).exec()
+    },
+    deletePolicy: async function (policy) {
+        return await Policy.findOneAndRemove({
+            _id: policy._id
+        }).exec()
     }
 }
 module.exports = queries

@@ -28,13 +28,96 @@ const koaBody = new KoaBody({
     formidable: {uploadDir: `${__dirname}/public/uploads`, keepExtensions: true}
 })
 
+const nodemailer = require('nodemailer')
 const router = new Router()
 const app = new Koa()
+// router.get('/', async => {
+//     nodemailer.createTestAccount((err, account) => {
+//         let transporter = nodemailer.createTransport("SMTP",{
+//             service: 'localhost',
+//             port:25,
+//             auth: {
+//                 user:'nahasean94@hotmmail.com',
+//                 password: 'stockmann2'
+//             }
+//         })
+//         let mailOptions = {
+//             from: 'nahasean94@hotmmail.com',
+//             to:'ncubed940@gmail.com',
+//             subject:'jhjkhj',
+//             text: 'Oya',
+//
+//         }
+//         transporter.sendMail(mailOptions, (err, info) => {
+//             if (err) {
+//                 console.log(err)
+//                 return
+//             }
+//             console.log("Preview URL: %s")
+//             nodemailer.getTestMessageUrl(info)
+//         })
+//     })
+// })
 
 //handle searching of upis to display student results
-router.post('/search', koaBody, async ctx => {
+router.post('/search/student/name', koaBody, async ctx => {
+    const upi = ctx.request.body.name
+    await queries.searchStudentName(upi).then(async function (results) {
+        ctx.body = results
+    }).catch(function (err) {
+        ctx.status = 500
+        ctx.body = {errors: err}
+    })
+})
+router.post('/search/student/upi', koaBody, async ctx => {
     const upi = ctx.request.body.upi
-    await queries.searchUPI(upi).then(async function (results) {
+    await queries.searchStudentUPI(upi).then(async function (results) {
+        ctx.body = results
+    }).catch(function (err) {
+        ctx.status = 500
+        ctx.body = {errors: err}
+    })
+})
+router.post('/search/teachers/tsc', koaBody, async ctx => {
+    const tsc = ctx.request.body.tsc_number
+    await queries.searchTeacherTsc(tsc).then(async function (results) {
+        console.log(results)
+        ctx.body = results
+    }).catch(function (err) {
+        ctx.status = 500
+        ctx.body = {errors: err}
+    })
+})
+router.post('/search/teachers/name', koaBody, async ctx => {
+    const name = ctx.request.body.name
+    await queries.searchTeacherName(name).then(async function (results) {
+        ctx.body = results
+    }).catch(function (err) {
+        ctx.status = 500
+        ctx.body = {errors: err}
+    })
+})
+router.post('/search/schools/name', koaBody, async ctx => {
+    const name = ctx.request.body.name
+    await queries.searchSchoolName(name).then(async function (results) {
+        ctx.body = results
+    }).catch(function (err) {
+        ctx.status = 500
+        ctx.body = {errors: err}
+    })
+})
+router.post('/search/schools/county', koaBody, async ctx => {
+    const county = ctx.request.body.county
+    await queries.searchSchoolCounty(county).then(async function (results) {
+        ctx.body = results
+    }).catch(function (err) {
+        ctx.status = 500
+        ctx.body = {errors: err}
+    })
+})
+router.post('/search/schools/upi', koaBody, async ctx => {
+    const upi = ctx.request.body.upi
+    await queries.searchSchoolUPI(upi).then(async function (results) {
         ctx.body = results
     }).catch(function (err) {
         ctx.status = 500
@@ -572,6 +655,17 @@ router.post('/schools/teachers/deceased', koaBody, authenticateSchoolAdmin, asyn
     })
 })
 
+router.post('/schools/teachers/transferred', koaBody, authenticateSchoolAdmin, async ctx => {
+    const upi = ctx.request.body.upi
+    await queries.fetchTransferredSchoolTeachers(upi).then(function (teachers) {
+        ctx.body = teachers
+
+    }).catch(function (err) {
+        ctx.status = 500
+        ctx.body = {errors: err}
+    })
+})
+
 
 //mark the teacher as retired
 router.get('/update_teacher_info/retired/:id', async ctx => {
@@ -772,6 +866,120 @@ router.post('/schools/history', koaBody, async ctx => {
 router.post('/schools/history/update', koaBody, async ctx => {
     await queries.updateSchoolHistory(ctx.request.body).then(function (school) {
         ctx.body = school
+    }).catch(function (err) {
+        ctx.status = 500
+        ctx.body = err
+    })
+})
+router.post('/schools/gallery/add', koaBody, async ctx => {
+    const cert = ctx.request.body
+    const absolutePath = cert.files.upload.path
+    const arraypath = absolutePath.split('\\')
+    const filepath = `${arraypath[arraypath.length - 1]}`
+    const photo = {
+        path: filepath,
+        description: cert.fields.body,
+        school_upi: cert.fields.school_upi
+    }
+    await queries.uploadSchoolPhoto(photo).then(function (school) {
+        ctx.body = school
+    }).catch(function (err) {
+        ctx.status = 500
+        ctx.body = err
+    })
+})
+router.post('/schools/gallery', koaBody, async ctx => {
+    await queries.getSchoolGallery(ctx.request.body).then(function (school) {
+        ctx.body = school
+    }).catch(function (err) {
+        ctx.status = 500
+        ctx.body = err
+    })
+})
+router.post('/update_teacher_info/picture/add', koaBody, async ctx => {
+    const photo = ctx.request.body
+    const absolutePath = photo.files.upload.path
+    const arraypath = absolutePath.split('\\')
+    const filepath = `${arraypath[arraypath.length - 1]}`
+    const pic = {
+        path: filepath,
+        tsc: photo.fields.tsc
+    }
+    await queries.uploadTeacherPhoto(pic).then(function (teacher) {
+        ctx.body = teacher
+    }).catch(function (err) {
+        ctx.status = 500
+        ctx.body = err
+    })
+})
+router.post('/students/picture/add', koaBody, async ctx => {
+    const photo = ctx.request.body
+    const absolutePath = photo.files.upload.path
+    const arraypath = absolutePath.split('\\')
+    const filepath = `${arraypath[arraypath.length - 1]}`
+    const pic = {
+        path: filepath,
+        upi: photo.fields.student_upi
+    }
+    await queries.uploadStudentPhoto(pic).then(function (teacher) {
+        ctx.body = teacher
+    }).catch(function (err) {
+        ctx.status = 500
+        ctx.body = err
+    })
+})
+router.post('/admin/policies/add', authenticateSystemAdmin, koaBody, async ctx => {
+    const document = ctx.request.body
+    const absolutePath = document.files.upload.path
+    const arraypath = absolutePath.split('\\')
+    const filepath = `${arraypath[arraypath.length - 1]}`
+    const policy = {
+        path: filepath,
+        title: document.fields.title
+    }
+    await queries.uploadPolicyDocument(policy).then(function (policy) {
+        ctx.body = policy
+    }).catch(function (err) {
+        ctx.status = 500
+        ctx.body = err
+    })
+})
+router.get('/policies', async ctx => {
+    await queries.getPolicies().then(function (policies) {
+        ctx.body = policies
+    }).catch(function (err) {
+        ctx.status = 500
+        ctx.body = err
+    })
+})
+router.post('/admin/policies/update', authenticateSystemAdmin, koaBody, async ctx => {
+    await queries.updatePolicy(ctx.request.body).then(function (policy) {
+        ctx.body = policy
+    }).catch(function (err) {
+        ctx.status = 500
+        ctx.body = err
+    })
+})
+router.post('/admin/policies/publish', authenticateSystemAdmin, koaBody, async ctx => {
+    await queries.publishPolicy(ctx.request.body).then(function (policy) {
+        ctx.body = policy
+    }).catch(function (err) {
+        ctx.status = 500
+        ctx.body = err
+    })
+})
+router.post('/admin/policies/unpublish', authenticateSystemAdmin, koaBody, async ctx => {
+    await queries.unpublishPolicy(ctx.request.body).then(function (policy) {
+        ctx.body = policy
+    }).catch(function (err) {
+        ctx.status = 500
+        ctx.body = err
+    })
+})
+router.post('/admin/policies/delete', authenticateSystemAdmin, koaBody, async ctx => {
+    fs.unlinkSync(`./public/uploads/${ctx.request.body.path}`)
+    await queries.deletePolicy(ctx.request.body).then(function (policy) {
+        ctx.body = policy
     }).catch(function (err) {
         ctx.status = 500
         ctx.body = err

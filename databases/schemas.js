@@ -36,11 +36,11 @@ const StudentSchema = new Schema({
             enum: ['KCPE', 'KCSE', 'Degree'],
         },
         path: String,
-        timestamp:Date
+        timestamp: Date
     }],
-    year:{
-        type:Number,
-        required:[true,"Year of study is a required field"]
+    year: {
+        type: Number,
+        required: [true, "Year of study is a required field"]
     },
     transfers: {
         current_school: {
@@ -59,11 +59,15 @@ const StudentSchema = new Schema({
                 type: Date
             }
         }]
+    },
+    picture: {
+        path: String,
+        timestamp: Date,
     }
 })
 const TeacherSchema = new Schema({
     tsc: {
-        type: String,
+        type: Number,
         unique: true,
         required: [true, 'TSC number is required']
     },
@@ -85,7 +89,6 @@ const TeacherSchema = new Schema({
         required: [true, 'Gender is required'],
         enum: ['male', 'female', 'other']
     },
-    nationalID: Number,
     contact: {
         email: {
             type: String,
@@ -109,9 +112,10 @@ const TeacherSchema = new Schema({
             }
         }]
     },
-    teaching_subjects: {
+    nationalID:Number,
+    teaching_subjects: [{
         name: String
-    },
+    }],
     //TODO store previous responsibilities
     responsibilities: [{
         name: {
@@ -128,6 +132,10 @@ const TeacherSchema = new Schema({
         type: String,
         enum: ['working', 'retired', 'deceased'],
         default: 'working'
+    },
+    picture: {
+        path: String,
+        timestamp: Date,
     }
 })
 const SchoolSchema = new Schema({
@@ -207,20 +215,29 @@ const SchoolSchema = new Schema({
             default: ''
         }
     },
-    history:{
-        history:String,
-        timestamp:Date
-    }
+    history: {
+        history: String,
+        timestamp: Date
+    },
+    gallery: [{
+        description: String,
+        path: String,
+        timestamp: Date,
+    }]
 })
 
-const MinistrySchema = new Schema({
-    policy: [{
+const PolicySchema = new Schema({
         title: String,
-        description: String,
+        path: String,
+        scope:{
+            type:String,
+            enum:['public','school','knec','unpublished'],
+            default:'unpublished'
+        },
         timestamp: {
             type: Date,
         }
-    }]
+
 })
 const DeceasedSchema = new Schema({
     teacher_id: {
@@ -315,20 +332,20 @@ const AdministratorSchema = new Schema({
         type: Date,
     }
 })
-const KnecAdminSchema=new Schema({
-    email:{
-        type:String,
-        unique:true,
-        required:[true,'Email is a required field']
+const KnecAdminSchema = new Schema({
+    email: {
+        type: String,
+        unique: true,
+        required: [true, 'Email is a required field']
     },
-    password:{
-        type:String,
-        required:[true,"Password is required"]
+    password: {
+        type: String,
+        required: [true, "Password is required"]
     },
-    timestamp:Date,
-    role:{
-        type:String,
-        default:'knec'
+    timestamp: Date,
+    role: {
+        type: String,
+        default: 'knec'
     }
 })
 
@@ -339,7 +356,7 @@ function setEmail(email) {
 const Student = mongoose.model('Student', StudentSchema)
 const Teacher = mongoose.model('Teacher', TeacherSchema)
 const School = mongoose.model('School', SchoolSchema)
-const Ministry = mongoose.model('Ministry', MinistrySchema)
+const Policy = mongoose.model('Policy', PolicySchema)
 const Deceased = mongoose.model('Deceased', DeceasedSchema)
 const Retired = mongoose.model('Retired', RetiredSchema)
 const SchoolAdmin = mongoose.model('SchoolAdmin', SchoolAdminSchema)
@@ -347,4 +364,4 @@ const Administrator = mongoose.model('Administrator', AdministratorSchema)
 const KnecAdmin = mongoose.model('KnecAdmin', KnecAdminSchema)
 
 
-module.exports = {Student, Teacher, School, Ministry, Deceased, Retired, SchoolAdmin, Administrator,KnecAdmin}
+module.exports = {Student, Teacher, School, Policy, Deceased, Retired, SchoolAdmin, Administrator, KnecAdmin}
