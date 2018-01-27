@@ -84,9 +84,12 @@ const queries = {
             'contact.phone1': teacher_info.telephone,
             'contact.email': teacher_info.email,
             gender: teacher_info.gender,
-            teaching_subjects: teacher_info.teaching_subjects,
+            teaching_subjects: {
+                subject_1: teacher_info.teaching_subject_1,
+                subject_2: teacher_info.teaching_subject_2,
+            },
             'posting_history.current_school': teacher_info.school_upi,
-            'posting_history.reporting_date': teacher_info.admission_date,
+            'posting_history.reporting_date': teacher_info.employment_date,
         }).save()
     },
     storeTscDetails: async function (teacher_info) {
@@ -296,6 +299,9 @@ const queries = {
     //fetch a teacher's details
     fetchTeacherDetails: function (id) {
         return Teacher.findOne({_id: id}).exec()
+    },
+    fetchTeacherTSC: async function (tsc) {
+        return await TSC.findOne({tsc: tsc.tsc}).exec()
     },
     //update school details
     updateTeacherDetails: async function (teacher) {
@@ -719,6 +725,11 @@ const queries = {
             cause_of_death: deceased.cod,
             nationalID: deceased.nationalID
         }).save()
+    },
+    isTeacherDead: async function (deceased) {
+        return await Dead.findOne({
+            nationalID: deceased.nationalID
+        }).exec()
     }
 }
 module.exports = queries

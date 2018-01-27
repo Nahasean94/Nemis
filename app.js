@@ -978,6 +978,22 @@ router.post('/deceased/register_deceased', koaBody, async ctx => {
         ctx.body = err
     })
 })
+router.post('/teachers/tsc', koaBody, async ctx => {
+    await queries.fetchTeacherTSC(ctx.request.body).then(function (policy) {
+        ctx.body = policy
+    }).catch(function (err) {
+        ctx.status = 500
+        ctx.body = err
+    })
+})
+router.post('/teachers/dead', koaBody, async ctx => {
+    await queries.isTeacherDead(ctx.request.body).then(function (policy) {
+        ctx.body = policy
+    }).catch(function (err) {
+        ctx.status = 500
+        ctx.body = err
+    })
+})
 
 
 //use middleware
