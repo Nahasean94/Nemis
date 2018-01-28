@@ -575,8 +575,8 @@ router.post('/school_admin_login', koaBody, async ctx => {
                 }
         }
         else {
-            ctx.status = 404
-            ctx.body = {errors: 'No user with such credentials'}
+                ctx.status = 401
+                ctx.body = {errors: {form: "No school administrator found with such credentials"}}
         }
     }).catch(function (err) {
         ctx.status = 500
@@ -747,13 +747,19 @@ router.post('/teachers/responsibilities', koaBody, async ctx => {
 //knec admin login
 router.post('/knec_admin_login', koaBody, async ctx => {
     await queries.knecAdminLogin(ctx.request.body).then(function (knecAdmin) {
-        ctx.body = {
-            token: jwt.sign({
-                id: knecAdmin._id,
-                email: knecAdmin.email,
-                role: knecAdmin.role
-            }, systemAdminSecret)
+        if (knecAdmin) {
+            ctx.body = {
+                token: jwt.sign({
+                    id: knecAdmin._id,
+                    email: knecAdmin.email,
+                    role: knecAdmin.role
+                }, systemAdminSecret)
+            }
+        } else {
+            ctx.status = 401
+            ctx.body = {errors: {form: "No Knec administrator found with such credentials"}}
         }
+
     }).catch(function (err) {
         ctx.status = 500
         ctx.body = err
@@ -797,14 +803,14 @@ router.post('/students/certificates/add', koaBody, async ctx => {
     })
 })
 router.post('/students/certificates', koaBody, async ctx => {
-        await queries.getStudentCertificates(ctx.request.body).then(function (certificates) {
+    await queries.getStudentCertificates(ctx.request.body).then(function (certificates) {
 
-            ctx.body = certificates
-        }).catch(function (err) {
-            ctx.status = 500
-            ctx.body = err
-        })
+        ctx.body = certificates
+    }).catch(function (err) {
+        ctx.status = 500
+        ctx.body = err
     })
+})
 //add school history
 router.post('/schools/history/add', koaBody, async ctx => {
     await queries.addSchoolHistory(ctx.request.body).then(function (school) {
@@ -989,6 +995,30 @@ router.post('/teachers/tsc', koaBody, async ctx => {
 router.post('/teachers/dead', koaBody, async ctx => {
     await queries.isTeacherDead(ctx.request.body).then(function (policy) {
         ctx.body = policy
+    }).catch(function (err) {
+        ctx.status = 500
+        ctx.body = err
+    })
+})
+router.post('/teachers/nemis', koaBody, async ctx => {
+    await queries.isTeacherInNemis(ctx.request.body).then(function (policy) {
+        ctx.body = policy
+    }).catch(function (err) {
+        ctx.status = 500
+        ctx.body = err
+    })
+})
+router.post('/school_admin/exists', koaBody, async ctx => {
+    await queries.isSchoolAdminExists(ctx.request.body).then(function (school_admin) {
+        ctx.body = school_admin
+    }).catch(function (err) {
+        ctx.status = 500
+        ctx.body = err
+    })
+})
+router.post('/schools/upi', koaBody, async ctx => {
+    await queries.isSchoolUPIExists(ctx.request.body).then(function (school) {
+        ctx.body = school
     }).catch(function (err) {
         ctx.status = 500
         ctx.body = err

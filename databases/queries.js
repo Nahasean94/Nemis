@@ -28,6 +28,11 @@ const queries = {
             tsc: tsc
         }).exec()
     },
+    isTeacherInNemis: async function (tsc) {
+        return await Teacher.findOne({
+            tsc: tsc.tsc
+        }).exec()
+    },
     searchSchoolName: async function (name) {
         return await School.find({
             name: name
@@ -83,6 +88,7 @@ const queries = {
             birthdate: teacher_info.dob,
             'contact.phone1': teacher_info.telephone,
             'contact.email': teacher_info.email,
+            nationalID:teacher_info.nationalID,
             gender: teacher_info.gender,
             teaching_subjects: {
                 subject_1: teacher_info.teaching_subject_1,
@@ -193,7 +199,6 @@ const queries = {
             }
             , {new: true}).exec()
     },
-
 //store new policy
     storePolicies: async function (policy_info) {
         const ministry = new Policy({
@@ -263,6 +268,7 @@ const queries = {
                 upi: upi,
                 name: school_info.name,
                 category: school_info.category,
+                county:school_info.county,
             }).save()
         }
         else {
@@ -308,7 +314,7 @@ const queries = {
         return await Teacher.findOneAndUpdate({
                 _id: teacher._id
             }, {
-                tsc: teacher.tsc,
+                // tsc: teacher.tsc,
                 surname: teacher.surname,
                 first_name: teacher.first_name,
                 second_name: teacher.second_name,
@@ -679,7 +685,7 @@ const queries = {
         }).save()
     },
     getPolicies: async function () {
-        return await Policy.find().exec()
+        return await Policy.find({}).sort({timestamp:-1}).exec()
     },
     getSchoolPolicies: async function () {
         return await Policy.find({scope: 'school'}).exec()
@@ -729,6 +735,16 @@ const queries = {
     isTeacherDead: async function (deceased) {
         return await Dead.findOne({
             nationalID: deceased.nationalID
+        }).exec()
+    },
+    isSchoolAdminExists: async function (school_upi) {
+        return await SchoolAdmin.findOne({
+            school_upi: school_upi.school_upi
+        }).exec()
+    },
+    isSchoolUPIExists: async function (upi) {
+        return await School.findOne({
+            upi: upi.upi
         }).exec()
     }
 }
